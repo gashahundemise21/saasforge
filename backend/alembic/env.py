@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
 from app.db.base import Base
+import app.models  # noqa: F401
 
 # add your model's MetaData object here
 # for 'autogenerate' support

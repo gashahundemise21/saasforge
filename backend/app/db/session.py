@@ -4,10 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import settings
 
+from sqlalchemy.pool import NullPool
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.ENVIRONMENT == "local",
     future=True,
+    poolclass=NullPool if settings.ENVIRONMENT == "test" else None,
 )
 
 AsyncSessionLocal = async_sessionmaker(
