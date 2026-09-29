@@ -24,3 +24,16 @@ class UserResponse(UserBase):
     updated_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserInvite(BaseModel):
+    email: EmailStr
+    role_name: str = "Member"
+
+
+class MemberResponse(BaseModel):
+    user: UserResponse
+    role_name: str
+    joined_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)

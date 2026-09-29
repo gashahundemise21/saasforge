@@ -43,3 +43,28 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def test_user(db_session: AsyncSession) -> "User":
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    
+    user = User(
+        email="auth@example.com",
+        hashed_password=get_password_hash("testpassword"),
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+async def auth_client(async_client: AsyncClient, test_user: "User") -> AsyncClient:
+    from app.core.security import create_access_token
+    
+    token = create_access_token(test_user.id)
+    async_client.headers.update({"Authorization": f"Bearer {token}"})
+    return async_client
