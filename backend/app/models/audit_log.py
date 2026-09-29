@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, Index
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,6 +22,10 @@ class AuditLog(BaseModel):
 
     organization_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+
+    __table_args__ = (
+        Index("ix_audit_logs_org_created_at", "organization_id", "created_at"),
     )
 
     organization: Mapped["Organization"] = relationship(back_populates="audit_logs")

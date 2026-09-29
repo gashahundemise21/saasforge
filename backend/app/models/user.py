@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -34,6 +34,10 @@ class OrganizationUser(BaseModel):
     )
     role_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), ForeignKey("roles.id", ondelete="RESTRICT"), index=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("organization_id", "user_id", name="uq_organization_user"),
     )
 
     organization: Mapped["Organization"] = relationship(  # type: ignore # noqa: F821

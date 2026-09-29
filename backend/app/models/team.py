@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,6 +36,10 @@ class TeamMember(BaseModel):
         UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     role: Mapped[str] = mapped_column(String(50), default="member")  # e.g., 'leader', 'member'
+
+    __table_args__ = (
+        UniqueConstraint("team_id", "user_id", name="uq_team_user"),
+    )
 
     # Relationships
     team: Mapped["Team"] = relationship("Team", back_populates="members")
