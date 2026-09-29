@@ -7,6 +7,8 @@ from app.models.api_key import ApiKey
 from app.models.audit_log import AuditLog
 from app.models.webhook import WebhookEndpoint, WebhookDelivery
 from app.models.team import Team, TeamMember, TeamInvitation
+from app.models.comment import Comment
+from app.models.attachment import Attachment
 
 __all__ = [
     "Organization",
@@ -24,4 +26,5 @@ __all__ = [
     "Team",
     "TeamMember",
     "TeamInvitation",
+    "Comment",
 ]
