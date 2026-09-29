@@ -17,6 +17,8 @@ class OrganizationUpdate(BaseModel):
 class OrganizationResponse(OrganizationBase):
     id: str
     slug: str
+    plan_id: str
+    subscription_status: str
     created_at: datetime
     updated_at: datetime
 
