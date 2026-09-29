@@ -1,4 +1,3 @@
-
 # Define hard limits for resources per plan
 # -1 indicates unlimited.
 PLAN_QUOTAS: dict[str, dict[str, int]] = {

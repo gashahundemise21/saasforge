@@ -12,6 +12,7 @@ from app.api.v1 import (
     notifications,
     organizations,
     projects,
+    search,
     tasks,
     teams,
     users,
@@ -34,3 +35,5 @@ router.include_router(billing.router, prefix="/billing", tags=["billing"])
 router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 router.include_router(attachments.router, prefix="/attachments", tags=["attachments"])
 router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+
+router.include_router(search.router, prefix="/search", tags=["search"])

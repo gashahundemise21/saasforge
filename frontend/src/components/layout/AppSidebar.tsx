@@ -26,6 +26,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { OrgSwitcher } from '@/components/layout/OrgSwitcher';
+import { GlobalSearch } from '@/components/layout/GlobalSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -62,6 +63,9 @@ export function AppSidebar() {
     <Sidebar variant="inset">
       <SidebarHeader>
         <OrgSwitcher />
+        <div className="px-2 py-2">
+          <GlobalSearch />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

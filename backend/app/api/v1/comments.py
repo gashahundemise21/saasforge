@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, status
 
 from app.api.deps import CurrentActor, CurrentOrganization, SessionDep
