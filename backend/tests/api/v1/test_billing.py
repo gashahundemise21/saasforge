@@ -95,3 +95,93 @@ async def test_stripe_webhook_subscription_updated(
     org_updated = next(o for o in org_fetch.json() if o["id"] == org["id"])
     assert org_updated["plan_id"] == "price_pro"
     assert org_updated["subscription_status"] == "active"
+
+
+@pytest.mark.asyncio
+async def test_get_invoices_and_subscription(auth_client: AsyncClient, mock_stripe: MagicMock):
+    org_resp = await auth_client.post("/api/v1/organizations", json={"name": "Invoice Org"})
+    org = org_resp.json()
+    auth_client.headers.update({"X-Organization-Slug": org["slug"]})
+
+    # Checkout first to set customer ID
+    mock_stripe.Customer.create.return_value = MagicMock(id="cus_inv_123")
+    mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://test")
+    await auth_client.post(
+        "/api/v1/billing/checkout",
+        json={"plan_id": "price_123", "success_url": "http://test", "cancel_url": "http://test"},
+    )
+    
+    # Send webhook to set subscription ID
+    payload = {
+        "type": "customer.subscription.updated",
+        "data": {
+            "object": {
+                "id": "sub_inv_123",
+                "customer": "cus_inv_123",
+                "status": "active",
+                "items": {"data": [{"price": {"id": "price_123"}}]},
+            }
+        },
+    }
+    mock_stripe.Webhook.construct_event.return_value = payload
+    await auth_client.post(
+        "/api/v1/billing/webhook",
+        json=payload,
+        headers={"Stripe-Signature": "t=123,v1=signature_test"},
+    )
+
+    # Mock invoices
+    class MockInvoice:
+        def __init__(self):
+            self.id = "in_123"
+            self.amount_due = 1000
+            self.amount_paid = 1000
+            self.amount_remaining = 0
+            self.status = "paid"
+            self.created = 1630000000
+            self.hosted_invoice_url = "http://stripe/in"
+            self.invoice_pdf = "http://stripe/pdf"
+    
+    class MockList:
+        def auto_paging_iter(self):
+            yield MockInvoice()
+            
+    mock_stripe.Invoice.list.return_value = MockList()
+    
+    inv_res = await auth_client.get("/api/v1/billing/invoices")
+    assert inv_res.status_code == 200
+    invoices = inv_res.json()
+    assert len(invoices) == 1
+    assert invoices[0]["id"] == "in_123"
+
+    # Mock subscription details
+    class MockPrice:
+        def __init__(self):
+            self.id = "price_123"
+            self.unit_amount = 1000
+            self.currency = "usd"
+            
+    class MockSubItem:
+        def __init__(self):
+            self.price = MockPrice()
+            
+    class MockSubItemsList:
+        def __init__(self):
+            self.data = [MockSubItem()]
+
+    class MockSubscription:
+        def __init__(self):
+            self.id = "sub_inv_123"
+            self.status = "active"
+            self.current_period_start = 1630000000
+            self.current_period_end = 1632592000
+            self.cancel_at_period_end = False
+            self.items = MockSubItemsList()
+            
+    mock_stripe.Subscription.retrieve.return_value = MockSubscription()
+
+    sub_res = await auth_client.get("/api/v1/billing/subscription")
+    assert sub_res.status_code == 200
+    sub_data = sub_res.json()
+    assert sub_data["id"] == "sub_inv_123"
+    assert sub_data["plan_id"] == "price_123"

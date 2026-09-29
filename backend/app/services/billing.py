@@ -86,7 +86,20 @@ class BillingService:
             raise SaaSForgeError(f"Invalid signature: {e}", status_code=400)
 
         # Handle the event
-        if (
+        if event["type"] == "invoice.payment_succeeded":
+            # Reset quotas or record successful cycle
+            invoice = event["data"]["object"]
+            customer_id = invoice.get("customer")
+            if customer_id:
+                result = await session.execute(
+                    select(Organization).where(Organization.stripe_customer_id == customer_id)
+                )
+                org = result.scalars().first()
+                if org:
+                    # In a real app we'd reset monthly counts or local quotas here
+                    pass
+
+        elif (
             event["type"] == "customer.subscription.created"
             or event["type"] == "customer.subscription.updated"
         ):
@@ -125,6 +138,77 @@ class BillingService:
             org.plan_id = "free"
 
         await session.commit()
+
+
+    @staticmethod
+    async def get_invoices(session: AsyncSession, org_id: str | UUID) -> list[dict]:
+        org = await BillingService._get_org(session, org_id)
+        if not org.stripe_customer_id:
+            return []
+        
+        try:
+            invoices = stripe.Invoice.list(customer=org.stripe_customer_id, limit=20)
+            result = []
+            for inv in invoices.auto_paging_iter():
+                result.append({
+                    "id": inv.id,
+                    "amount_due": inv.amount_due,
+                    "amount_paid": inv.amount_paid,
+                    "amount_remaining": inv.amount_remaining,
+                    "status": inv.status,
+                    "created": inv.created,
+                    "hosted_invoice_url": getattr(inv, "hosted_invoice_url", None),
+                    "invoice_pdf": getattr(inv, "invoice_pdf", None),
+                })
+            return result
+        except Exception:
+            return []
+
+    @staticmethod
+    async def get_subscription_details(session: AsyncSession, org_id: str | UUID) -> dict | None:
+        org = await BillingService._get_org(session, org_id)
+        if not org.stripe_subscription_id:
+            return None
+        
+        try:
+            sub = stripe.Subscription.retrieve(org.stripe_subscription_id)
+            plan_id = None
+            amount = None
+            currency = None
+            if sub.items and sub.items.data:
+                price = sub.items.data[0].price
+                plan_id = price.id
+                amount = price.unit_amount
+                currency = price.currency
+                
+            return {
+                "id": sub.id,
+                "status": sub.status,
+                "current_period_start": sub.current_period_start,
+                "current_period_end": sub.current_period_end,
+                "cancel_at_period_end": sub.cancel_at_period_end,
+                "plan_id": plan_id,
+                "amount": amount,
+                "currency": currency,
+            }
+        except Exception:
+            return None
+            
+    @staticmethod
+    async def process_usage(session: AsyncSession, org_id: str | UUID, event_name: str, quantity: int = 1) -> None:
+        """Report metered usage to Stripe (e.g., API calls, AI tokens)."""
+        org = await BillingService._get_org(session, org_id)
+        if not org.stripe_subscription_id:
+            return
+            
+        # In a real metered implementation, you'd map `event_name` to a Stripe Meter ID or Subscription Item
+        # For phase 25, we just stub the intent to show usage metering architecture.
+        # e.g.:
+        # stripe.billing.MeterEvent.create(
+        #     event_name=event_name,
+        #     payload={"stripe_customer_id": org.stripe_customer_id, "value": str(quantity)}
+        # )
+        pass
 
     @staticmethod
     async def _get_org(session: AsyncSession, org_id: str | UUID) -> Organization:

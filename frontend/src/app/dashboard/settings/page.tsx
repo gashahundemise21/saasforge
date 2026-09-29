@@ -31,6 +31,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 export default function SettingsPage() {
   const { activeOrg } = useAuth();
+  const [activeTab, setActiveTab] = useState('profile');
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [subscription, setSubscription] = useState<any>(null);
   
   // API Keys state
   const [apiKeys, setApiKeys] = useState<any[]>([]);
@@ -171,6 +174,30 @@ export default function SettingsPage() {
       console.error(err);
     }
   };
+
+
+
+  const fetchBillingData = async () => {
+    if (!activeOrg) return;
+    try {
+      const invRes = await api.get('/api/v1/billing/invoices');
+      setInvoices(invRes.data);
+    } catch (err) {
+      console.error('Failed to load invoices', err);
+    }
+    try {
+      const subRes = await api.get('/api/v1/billing/subscription');
+      setSubscription(subRes.data);
+    } catch (err) {
+      console.error('Failed to load subscription details', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'billing' && activeOrg) {
+      fetchBillingData();
+    }
+  }, [activeTab, activeOrg]);
 
   const handleCreateWebhook = async (e: React.FormEvent) => {
     e.preventDefault();

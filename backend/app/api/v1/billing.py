@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 from app.api.deps import CurrentOrganization, RequireRole, SessionDep
 from app.services.billing import BillingService
+from app.schemas.billing import InvoiceResponse, SubscriptionDetailsResponse
+
 
 router = APIRouter()
 
@@ -62,3 +64,27 @@ async def stripe_webhook(
     payload = await request.body()
     await BillingService.process_webhook(session, payload, stripe_signature)
     return {"received": True}
+
+
+@router.get("/invoices", response_model=list[InvoiceResponse])
+async def get_invoices(
+    session: SessionDep,
+    current_org: CurrentOrganization,
+    _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
+) -> list[dict]:
+    """Get all invoices for the organization."""
+    return await BillingService.get_invoices(session, current_org.id)
+
+@router.get("/subscription", response_model=SubscriptionDetailsResponse)
+async def get_subscription(
+    session: SessionDep,
+    current_org: CurrentOrganization,
+    _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
+) -> dict:
+    """Get current subscription details for the organization."""
+    details = await BillingService.get_subscription_details(session, current_org.id)
+    if not details:
+        # Return a 404 or a mock free-tier representation
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="No active subscription found")
+    return details
