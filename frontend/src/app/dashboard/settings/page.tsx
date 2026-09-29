@@ -37,6 +37,9 @@ export default function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState('');
   const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [keyLogs, setKeyLogs] = useState<any[]>([]);
+  const [isLogsDialogOpen, setIsLogsDialogOpen] = useState(false);
+  const [selectedKeyForLogs, setSelectedKeyForLogs] = useState<string | null>(null);
 
 
   // Integrations state
@@ -113,6 +116,30 @@ export default function SettingsPage() {
       setIsIntegrationDialogOpen(false);
       setIntegrationToken('');
       fetchIntegrations();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+  const fetchKeyLogs = async (keyId: string) => {
+    try {
+      const res = await api.get(`/api/v1/api-keys/${keyId}/logs`);
+      setKeyLogs(res.data);
+      setSelectedKeyForLogs(keyId);
+      setIsLogsDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const rotateKey = async (keyId: string) => {
+    if (!confirm('Are you sure you want to rotate this key? The old key will stop working immediately.')) return;
+    try {
+      const res = await api.post(`/api/v1/api-keys/${keyId}/rotate`);
+      setGeneratedKey(res.data.raw_key);
+      setIsKeyDialogOpen(true);
+      fetchApiKeys();
     } catch (err) {
       console.error(err);
     }
@@ -217,6 +244,7 @@ export default function SettingsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Prefix</TableHead>
                   <TableHead>Created At</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -230,6 +258,10 @@ export default function SettingsPage() {
                       <TableCell className="font-medium">{key.name}</TableCell>
                       <TableCell><code className="bg-muted px-1.5 py-0.5 rounded text-xs">{key.prefix}</code></TableCell>
                       <TableCell className="text-muted-foreground">{new Date(key.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => fetchKeyLogs(key.id)}>Logs</Button>
+                        <Button variant="outline" size="sm" onClick={() => rotateKey(key.id)}>Rotate</Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -336,6 +368,43 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isLogsDialogOpen} onOpenChange={setIsLogsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>API Request Logs</DialogTitle>
+            <DialogDescription>Recent API requests made with this key</DialogDescription>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Endpoint</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Duration</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {keyLogs.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center">No requests logged yet.</TableCell></TableRow>
+              ) : (
+                keyLogs.map((log: any) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="text-xs">{new Date(log.created_at).toLocaleString()}</TableCell>
+                    <TableCell><Badge variant="outline">{log.method}</Badge></TableCell>
+                    <TableCell className="font-mono text-xs">{log.endpoint}</TableCell>
+                    <TableCell>
+                      <Badge variant={log.status_code >= 400 ? 'destructive' : 'default'}>{log.status_code}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">{log.duration_ms}ms</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 from app.models.api_key import ApiKey
+from app.models.api_request_log import ApiRequestLog
 from app.models.attachment import Attachment
 from app.models.audit_log import AuditLog
 from app.models.comment import Comment
@@ -22,6 +23,7 @@ __all__ = [
     "Project",
     "Task",
     "ApiKey",
+    "ApiRequestLog",
     "AuditLog",
     "WebhookEndpoint",
     "Workflow",

@@ -23,6 +23,7 @@ class ApiKeyService:
             prefix=prefix,
             hashed_key=hashed_key,
             expires_at=api_key_in.expires_at,
+            scopes=api_key_in.scopes,
         )
         session.add(api_key)
         await session.commit()
@@ -58,3 +59,28 @@ class ApiKeyService:
 
         api_key.is_active = False
         await session.commit()
+
+
+    @staticmethod
+    async def rotate_api_key(session: AsyncSession, org_id: str | UUID, key_id: str | UUID) -> tuple[ApiKey, str]:
+        """Rotate an existing API key, generating a new secret for it."""
+        result = await session.execute(
+            select(ApiKey)
+            .where(ApiKey.id == str(key_id))
+            .where(ApiKey.organization_id == str(org_id))
+            .where(ApiKey.is_active == True)
+        )
+        api_key = result.scalars().first()
+        if not api_key:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API Key not found or already revoked",
+            )
+        
+        prefix, raw_key, hashed_key = generate_api_key()
+        api_key.prefix = prefix
+        api_key.hashed_key = hashed_key
+        
+        await session.commit()
+        await session.refresh(api_key)
+        return api_key, raw_key

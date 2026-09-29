@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.core.middleware import ApiLoggingMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import router
@@ -22,6 +23,7 @@ def create_app() -> FastAPI:
     )
 
     # CORS Configuration
+    app.add_middleware(ApiLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],  # Restrict in production

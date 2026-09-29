@@ -96,8 +96,11 @@ async def get_current_organization(
 
         if valid_key:
             from app.db.base import get_utc_now
+            now = get_utc_now()
+            if valid_key.expires_at and valid_key.expires_at < now:
+                raise HTTPException(status_code=401, detail="API Key has expired")
 
-            valid_key.last_used_at = get_utc_now()
+            valid_key.last_used_at = now
             await session.commit()
             request.state.api_key = valid_key
             request.state.organization_user = None  # No user context
@@ -187,3 +190,26 @@ class RequireRole:
             )
 
         return org_user
+
+
+class RequireScope:
+    def __init__(self, allowed_scopes: list[str]) -> None:
+        self.allowed_scopes = allowed_scopes
+
+    def __call__(self, request: Request, current_org: CurrentOrganization):
+        api_key = getattr(request.state, "api_key", None)
+        if api_key:
+            # Check scopes
+            key_scopes = set(api_key.scopes)
+            # If empty scopes, maybe full access or no access. Let's say full access for backward compatibility,
+            # or if 'all' is in scopes.
+            if not key_scopes:
+                return None
+            
+            has_scope = any(scope in key_scopes for scope in self.allowed_scopes)
+            if not has_scope:
+                raise HTTPException(status_code=403, detail="API Key does not have required scope")
+            return None
+            
+        # If user, rely on RequireRole. Or just pass.
+        return None

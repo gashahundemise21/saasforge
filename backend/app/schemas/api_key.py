@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class ApiKeyBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     expires_at: datetime | None = None
+    scopes: list[str] = Field(default_factory=list)
 
 
 class ApiKeyCreate(ApiKeyBase):
@@ -22,6 +23,7 @@ class ApiKeyResponse(ApiKeyBase):
     is_active: bool
     last_used_at: datetime | None
     created_at: datetime
+    scopes: list[str] = []
 
 
 class ApiKeyCreateResponse(ApiKeyResponse):
