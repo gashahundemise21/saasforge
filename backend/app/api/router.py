@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, health, organizations, users, projects, tasks
+from app.api.v1 import auth, health, organizations, users, projects, tasks, api_keys
 
 router = APIRouter()
 router.include_router(health.router, tags=["health"])
@@ -9,3 +9,4 @@ router.include_router(organizations.router, prefix="/organizations", tags=["orga
 router.include_router(users.router, prefix="/users", tags=["users"])
 router.include_router(projects.router, prefix="/projects", tags=["projects"])
 router.include_router(tasks.router, tags=["tasks"])
+router.include_router(api_keys.router, prefix="/api-keys", tags=["api_keys"])
