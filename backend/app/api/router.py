@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    admin,
     analytics,
     api_keys,
     attachments,
@@ -42,3 +43,5 @@ router.include_router(search.router, prefix="/search", tags=["search"])
 
 router.include_router(workflows.router, prefix="/workflows", tags=["workflows"])
 router.include_router(integrations.router)
+
+router.include_router(admin.router, prefix="/admin", tags=["admin"])
