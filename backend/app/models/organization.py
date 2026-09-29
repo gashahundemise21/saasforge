@@ -17,3 +17,6 @@ class Organization(BaseModel):
     users: Mapped[list["OrganizationUser"]] = relationship(  # type: ignore # noqa: F821
         "OrganizationUser", back_populates="organization", cascade="all, delete-orphan"
     )
+    projects: Mapped[list["Project"]] = relationship(
+        "Project", back_populates="organization", cascade="all, delete-orphan"
+    )
