@@ -17,6 +17,7 @@ from app.api.v1 import (
     teams,
     users,
     webhooks,
+    workflows,
 )
 
 router = APIRouter()
@@ -37,3 +38,5 @@ router.include_router(attachments.router, prefix="/attachments", tags=["attachme
 router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 
 router.include_router(search.router, prefix="/search", tags=["search"])
+
+router.include_router(workflows.router, prefix="/workflows", tags=["workflows"])

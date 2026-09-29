@@ -8,6 +8,7 @@ from app.models.task import Task
 from app.models.user import OrganizationUser
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.project import ProjectService
+from app.services.workflow import WorkflowEngine
 
 
 class TaskService:
@@ -43,6 +44,14 @@ class TaskService:
         session.add(task)
         await session.commit()
         await session.refresh(task)
+
+        # Trigger workflow
+        await WorkflowEngine.trigger_event(
+            session,
+            org_id,
+            "task.created",
+            {"task_id": task.id, "title": task.title},
+        )
         return task
 
     @staticmethod
@@ -101,6 +110,14 @@ class TaskService:
 
         await session.commit()
         await session.refresh(task)
+
+        # Trigger workflow
+        await WorkflowEngine.trigger_event(
+            session,
+            org_id,
+            "task.created",
+            {"task_id": task.id, "title": task.title},
+        )
         return task
 
     @staticmethod

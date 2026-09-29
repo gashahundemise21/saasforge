@@ -14,6 +14,7 @@ import {
   CreditCard,
   Activity,
   Bell,
+  Workflow,
 } from 'lucide-react';
 
 import {
@@ -56,6 +57,7 @@ export function AppSidebar() {
     { name: 'Activity', href: '/dashboard/activity', icon: Activity },
     { name: 'Team Members', href: '/dashboard/members', icon: Users },
     { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
+    { name: 'Workflows', href: '/dashboard/workflows', icon: Workflow },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 

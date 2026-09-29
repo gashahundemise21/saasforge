@@ -9,6 +9,7 @@ from app.models.task import Task
 from app.models.team import Team, TeamInvitation, TeamMember
 from app.models.user import OrganizationUser, User
 from app.models.webhook import WebhookDelivery, WebhookEndpoint
+from app.models.workflow import Workflow, WorkflowAction
 
 __all__ = [
     "Organization",
@@ -22,6 +23,8 @@ __all__ = [
     "ApiKey",
     "AuditLog",
     "WebhookEndpoint",
+    "Workflow",
+    "WorkflowAction",
     "WebhookDelivery",
     "Team",
     "TeamMember",
