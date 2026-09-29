@@ -6,6 +6,7 @@ from app.models.task import Task
 from app.models.api_key import ApiKey
 from app.models.audit_log import AuditLog
 from app.models.webhook import WebhookEndpoint, WebhookDelivery
+from app.models.team import Team, TeamMember, TeamInvitation
 
 __all__ = [
     "Organization",
@@ -20,4 +21,7 @@ __all__ = [
     "AuditLog",
     "WebhookEndpoint",
     "WebhookDelivery",
+    "Team",
+    "TeamMember",
+    "TeamInvitation",
 ]
