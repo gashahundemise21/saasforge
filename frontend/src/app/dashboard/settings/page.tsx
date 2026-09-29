@@ -38,6 +38,13 @@ export default function SettingsPage() {
   const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
+
+  // Integrations state
+  const [integrations, setIntegrations] = useState<any[]>([]);
+  const [isIntegrationDialogOpen, setIsIntegrationDialogOpen] = useState(false);
+  const [integrationProvider, setIntegrationProvider] = useState('slack');
+  const [integrationToken, setIntegrationToken] = useState('');
+
   // Webhooks state
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
@@ -50,6 +57,7 @@ export default function SettingsPage() {
     if (activeOrg) {
       fetchApiKeys();
       fetchWebhooks();
+      fetchIntegrations();
     }
   }, [activeOrg]);
 
@@ -57,6 +65,16 @@ export default function SettingsPage() {
     try {
       const res = await api.get('/api/v1/api-keys');
       setApiKeys(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+  const fetchIntegrations = async () => {
+    try {
+      const res = await api.get('/api/v1/integrations');
+      setIntegrations(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -83,6 +101,23 @@ export default function SettingsPage() {
     }
   };
 
+
+  const handleCreateIntegration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/api/v1/integrations', {
+        provider: integrationProvider,
+        credentials: { token: integrationToken },
+        settings: {},
+      });
+      setIsIntegrationDialogOpen(false);
+      setIntegrationToken('');
+      fetchIntegrations();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCreateWebhook = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -94,6 +129,7 @@ export default function SettingsPage() {
       setNewWebhookUrl('');
       setSelectedEvents([]);
       fetchWebhooks();
+      fetchIntegrations();
     } catch (err) {
       console.error(err);
     }
@@ -112,6 +148,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
         
         {/* API KEYS TAB */}

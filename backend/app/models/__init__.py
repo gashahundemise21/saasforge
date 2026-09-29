@@ -10,6 +10,7 @@ from app.models.team import Team, TeamInvitation, TeamMember
 from app.models.user import OrganizationUser, User
 from app.models.webhook import WebhookDelivery, WebhookEndpoint
 from app.models.workflow import Workflow, WorkflowAction
+from app.models.integration import IntegrationConnection
 
 __all__ = [
     "Organization",
@@ -30,5 +31,6 @@ __all__ = [
     "TeamMember",
     "TeamInvitation",
     "Comment",
+    "IntegrationConnection",
 ]
 from .notification import Notification

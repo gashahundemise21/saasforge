@@ -18,6 +18,7 @@ from app.api.v1 import (
     users,
     webhooks,
     workflows,
+    integrations,
 )
 
 router = APIRouter()
@@ -40,3 +41,4 @@ router.include_router(notifications.router, prefix="/notifications", tags=["noti
 router.include_router(search.router, prefix="/search", tags=["search"])
 
 router.include_router(workflows.router, prefix="/workflows", tags=["workflows"])
+router.include_router(integrations.router)
