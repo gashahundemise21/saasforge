@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, health, attachments, organizations, users, projects, tasks, api_keys, audit_logs, webhooks, billing, analytics, teams, comments
+from app.api.v1 import auth, health, notifications, attachments, organizations, users, projects, tasks, api_keys, audit_logs, webhooks, billing, analytics, teams, comments
 
 router = APIRouter()
 router.include_router(health.router, tags=["health"])
@@ -17,3 +17,4 @@ router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 router.include_router(billing.router, prefix="/billing", tags=["billing"])
 router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 router.include_router(attachments.router, prefix="/attachments", tags=["attachments"])
+router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

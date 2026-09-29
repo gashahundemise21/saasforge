@@ -28,3 +28,4 @@ __all__ = [
     "TeamInvitation",
     "Comment",
 ]
+from .notification import Notification
