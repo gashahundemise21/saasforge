@@ -49,7 +49,7 @@ class TaskService:
         await WorkflowEngine.trigger_event(
             session,
             org_id,
-            "task.created",
+            "task.updated",
             {"task_id": task.id, "title": task.title},
         )
         return task
@@ -115,7 +115,7 @@ class TaskService:
         await WorkflowEngine.trigger_event(
             session,
             org_id,
-            "task.created",
+            "task.updated",
             {"task_id": task.id, "title": task.title},
         )
         return task
@@ -124,5 +124,15 @@ class TaskService:
     async def delete_task(session: AsyncSession, org_id: str | UUID, task_id: str | UUID) -> None:
         """Delete a task (hard delete for tasks)."""
         task = await TaskService.get_task(session, org_id, task_id)
+        task_id_str = str(task.id)
+        task_title = task.title
         await session.delete(task)
         await session.commit()
+
+        # Trigger workflow
+        await WorkflowEngine.trigger_event(
+            session,
+            org_id,
+            "task.deleted",
+            {"task_id": task_id_str, "title": task_title},
+        )

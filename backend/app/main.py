@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
     app.add_middleware(ApiLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Restrict in production
+        allow_origins=settings.BACKEND_CORS_ORIGINS,  # Restrict in production
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

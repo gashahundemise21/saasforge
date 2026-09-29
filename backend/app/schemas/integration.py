@@ -20,9 +20,12 @@ class IntegrationConnectionUpdate(BaseModel):
     settings: dict[str, Any] | None = None
 
 
-class IntegrationConnectionResponse(IntegrationConnectionBase):
+class IntegrationConnectionResponse(BaseModel):
     id: str
     organization_id: str
+    provider: str
+    is_active: bool
+    settings: dict[str, Any]
     created_at: datetime
     updated_at: datetime
 
