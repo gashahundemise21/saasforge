@@ -238,9 +238,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold tracking-tight">Active API Keys</h2>
             <Dialog open={isKeyDialogOpen} onOpenChange={setIsKeyDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>Generate Key</Button>
-              </DialogTrigger>
+              <DialogTrigger render={<Button />}>Generate Key</DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 {generatedKey ? (
                   <div className="space-y-4">
@@ -330,9 +328,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold tracking-tight">Webhook Endpoints</h2>
             <Dialog open={isWebhookDialogOpen} onOpenChange={setIsWebhookDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>Register Endpoint</Button>
-              </DialogTrigger>
+              <DialogTrigger render={<Button />}>Register Endpoint</DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 
                 {generatedWebhookSecret ? (

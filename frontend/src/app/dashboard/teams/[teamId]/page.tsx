@@ -128,11 +128,9 @@ export default function TeamDetailsPage({ params }: { params: Promise<{ teamId: 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center space-x-4 mb-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/teams">
+        <Button variant="ghost" size="icon" render={<Link href="/dashboard/teams" />}>
             <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+          </Button>
         <h2 className="text-3xl font-bold tracking-tight">{team?.name}</h2>
       </div>
       
@@ -143,11 +141,9 @@ export default function TeamDetailsPage({ params }: { params: Promise<{ teamId: 
       <div className="flex items-center justify-between space-y-2 mt-8">
         <h3 className="text-xl font-bold">Members</h3>
         <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-          <DialogTrigger asChild>
-            <Button>
+          <DialogTrigger render={<Button />}>
               <UserPlus className="mr-2 h-4 w-4" /> Invite Member
-            </Button>
-          </DialogTrigger>
+            </DialogTrigger>
           <DialogContent>
             <form onSubmit={handleInvite}>
               <DialogHeader>

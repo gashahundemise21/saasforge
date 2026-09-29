@@ -141,7 +141,7 @@ export default function TasksPage() {
         <div className="flex items-center gap-4">
           <Select 
             value={selectedProjectId} 
-            onValueChange={setSelectedProjectId}
+            onValueChange={(val) => setSelectedProjectId(val || "")}
             disabled={projects.length === 0}
           >
             <SelectTrigger className="w-[200px]">
@@ -157,9 +157,7 @@ export default function TasksPage() {
           </Select>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button disabled={!selectedProjectId}>New Task</Button>
-            </DialogTrigger>
+            <DialogTrigger render={<Button disabled={!selectedProjectId} />}>New Task</DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <form onSubmit={handleCreateTask}>
                 <DialogHeader>

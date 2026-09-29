@@ -98,11 +98,9 @@ export default function TeamsPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Teams</h2>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
+          <DialogTrigger render={<Button />}>
               <Plus className="mr-2 h-4 w-4" /> New Team
-            </Button>
-          </DialogTrigger>
+            </DialogTrigger>
           <DialogContent>
             <form onSubmit={handleCreateTeam}>
               <DialogHeader>
@@ -172,11 +170,9 @@ export default function TeamsPage() {
                     <TableCell>{team.description || "-"}</TableCell>
                     <TableCell>{format(new Date(team.created_at), "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/teams/${team.id}`}>
+                      <Button variant="outline" size="sm" render={<Link href={`/dashboard/teams/${team.id}`} />}>
                           Manage Members
-                        </Link>
-                      </Button>
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}

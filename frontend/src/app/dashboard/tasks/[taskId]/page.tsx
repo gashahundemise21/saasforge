@@ -182,11 +182,9 @@ export default function TaskDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/tasks">
+        <Button variant="ghost" size="icon" render={<Link href="/dashboard/tasks" />}>
             <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+          </Button>
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight">{task.title}</h1>

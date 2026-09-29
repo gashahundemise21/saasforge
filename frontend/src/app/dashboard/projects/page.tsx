@@ -86,9 +86,7 @@ export default function ProjectsPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>New Project</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button />}>New Project</DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleCreateProject}>
               <DialogHeader>

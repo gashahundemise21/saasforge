@@ -85,9 +85,7 @@ export default function MembersPage() {
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Invite Member</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button />}>Invite Member</DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleInvite}>
               <DialogHeader>

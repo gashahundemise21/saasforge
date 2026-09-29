@@ -75,8 +75,7 @@ export function AppSidebar() {
             const isActive = pathname === item.href;
             return (
               <SidebarMenuItem key={item.name}>
-                <SidebarMenuButton asChild isActive={isActive}>
-                  <Link href={item.href}>
+                <SidebarMenuButton render={<Link href={item.href} />} isActive={isActive}>
                     <item.icon />
                     <span className="flex-1">{item.name}</span>
                     {item.name === 'Notifications' && unreadCount > 0 && (
@@ -84,8 +83,7 @@ export function AppSidebar() {
                         {unreadCount}
                       </Badge>
                     )}
-                  </Link>
-                </SidebarMenuButton>
+                  </SidebarMenuButton>
               </SidebarMenuItem>
             );
           })}
