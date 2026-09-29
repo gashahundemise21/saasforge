@@ -1,10 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable react-hooks/immutability */
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,9 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, ArrowLeft, Trash2, Edit2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Trash2, Edit2, Paperclip, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/immutability */
 
 export default function TaskDetailPage() {
   const { taskId } = useParams();
@@ -24,6 +24,7 @@ export default function TaskDetailPage() {
   
   const [task, setTask] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [newComment, setNewComment] = useState('');
@@ -31,6 +32,9 @@ export default function TaskDetailPage() {
   
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (activeOrg && taskId) {
@@ -41,12 +45,14 @@ export default function TaskDetailPage() {
   const fetchTaskData = async () => {
     try {
       setLoading(true);
-      const [taskRes, commentsRes] = await Promise.all([
+      const [taskRes, commentsRes, attachmentsRes] = await Promise.all([
         api.get(`/api/v1/tasks/${taskId}`),
-        api.get(`/api/v1/comments/tasks/${taskId}`)
+        api.get(`/api/v1/comments/tasks/${taskId}`),
+        api.get(`/api/v1/attachments/tasks/${taskId}`)
       ]);
       setTask(taskRes.data);
       setComments(commentsRes.data);
+      setAttachments(attachmentsRes.data);
     } catch (err) {
       console.error('Failed to fetch task data', err);
     } finally {
@@ -96,6 +102,66 @@ export default function TaskDetailPage() {
       console.error('Failed to update comment', err);
     }
   };
+  
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !taskId) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('task_id', taskId as string);
+    
+    try {
+      setUploading(true);
+      const res = await api.post('/api/v1/attachments', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setAttachments([res.data, ...attachments]);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err) {
+      console.error('Failed to upload attachment', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  
+  const handleDownloadAttachment = async (attachment: any) => {
+    try {
+      const res = await api.get(`/api/v1/attachments/${attachment.id}/download`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', attachment.filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (err) {
+      console.error('Failed to download attachment', err);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm("Are you sure you want to delete this attachment?")) return;
+    try {
+      await api.delete(`/api/v1/attachments/${attachmentId}`);
+      setAttachments(attachments.filter(a => a.id !== attachmentId));
+    } catch (err) {
+      console.error('Failed to delete attachment', err);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   if (loading) {
     return (
@@ -109,39 +175,35 @@ export default function TaskDetailPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold mb-2">Task not found</h2>
-        <Button onClick={() => router.push('/dashboard/tasks')}>Back to Tasks</Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/tasks">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{task.title}</h1>
-            <Badge variant="outline" className="capitalize">{task.status}</Badge>
-            <Badge variant="secondary" className="capitalize">{task.priority}</Badge>
+        <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleDownloadAttachment(att)}
+                    >
+                      <Download className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    {(user?.id === att.uploader_id || user?.role === 'Owner' || user?.role === 'Admin') && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDeleteAttachment(att.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <p className="text-muted-foreground mt-1">
-            Created on {format(new Date(task.created_at), 'PPP')}
-          </p>
-        </div>
+        ) : (
+          <div className="text-center py-6 bg-muted/50 rounded-lg border border-dashed">
+            <p className="text-sm text-muted-foreground">No attachments yet</p>
+          </div>
+        )}
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Description</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="whitespace-pre-wrap">{task.description || 'No description provided.'}</p>
-        </CardContent>
-      </Card>
       
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Activity & Comments</h2>

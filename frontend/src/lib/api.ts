@@ -50,3 +50,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const getApiUrl = () => API_URL;
