@@ -8,6 +8,7 @@ import {
   Users,
   Settings,
   CreditCard,
+  Activity,
 } from 'lucide-react';
 
 import {
@@ -33,6 +34,7 @@ export function AppSidebar() {
     { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
     { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
     { name: 'Teams', href: '/dashboard/teams', icon: Users },
+    { name: 'Activity', href: '/dashboard/activity', icon: Activity },
     { name: 'Team Members', href: '/dashboard/members', icon: Users },
     { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
