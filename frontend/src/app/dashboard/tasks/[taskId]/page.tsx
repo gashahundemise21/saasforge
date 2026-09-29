@@ -13,9 +13,9 @@ import { Loader2, ArrowLeft, Trash2, Edit2, Paperclip, Download } from 'lucide-r
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable react-hooks/immutability */
+ 
+ 
+ 
 
 export default function TaskDetailPage() {
   const { taskId } = useParams();

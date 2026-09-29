@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable react-hooks/immutability */
+ 
+ 
+ 
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
