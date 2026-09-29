@@ -37,6 +37,7 @@ export default function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState('');
   const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [generatedWebhookSecret, setGeneratedWebhookSecret] = useState<string | null>(null);
   const [keyLogs, setKeyLogs] = useState<any[]>([]);
   const [isLogsDialogOpen, setIsLogsDialogOpen] = useState(false);
   const [selectedKeyForLogs, setSelectedKeyForLogs] = useState<string | null>(null);
@@ -53,6 +54,9 @@ export default function SettingsPage() {
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isWebhookDialogOpen, setIsWebhookDialogOpen] = useState(false);
+  const [webhookDeliveries, setWebhookDeliveries] = useState<any[]>([]);
+  const [isDeliveriesDialogOpen, setIsDeliveriesDialogOpen] = useState(false);
+  const [selectedEndpointForDeliveries, setSelectedEndpointForDeliveries] = useState<string | null>(null);
 
   const availableEvents = ['task.created', 'task.updated', 'task.deleted'];
 
@@ -145,14 +149,38 @@ export default function SettingsPage() {
     }
   };
 
+
+  const fetchWebhookDeliveries = async (endpointId: string) => {
+    try {
+      const res = await api.get(`/api/v1/webhooks/${endpointId}/deliveries`);
+      setWebhookDeliveries(res.data);
+      setSelectedEndpointForDeliveries(endpointId);
+      setIsDeliveriesDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const replayDelivery = async (deliveryId: string) => {
+    if (!selectedEndpointForDeliveries) return;
+    try {
+      await api.post(`/api/v1/webhooks/${selectedEndpointForDeliveries}/deliveries/${deliveryId}/retry`);
+      // Refresh deliveries
+      fetchWebhookDeliveries(selectedEndpointForDeliveries);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCreateWebhook = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/api/v1/webhooks', {
+      const res = await api.post('/api/v1/webhooks', {
         url: newWebhookUrl,
         events: selectedEvents,
       });
-      setIsWebhookDialogOpen(false);
+      // setIsWebhookDialogOpen(false); // We keep it open to show secret
+      setGeneratedWebhookSecret(res.data.secret);
       setNewWebhookUrl('');
       setSelectedEvents([]);
       fetchWebhooks();
@@ -279,7 +307,30 @@ export default function SettingsPage() {
                 <Button>Register Endpoint</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
-                <form onSubmit={handleCreateWebhook}>
+                
+                {generatedWebhookSecret ? (
+                  <div className="space-y-4">
+                    <DialogHeader>
+                      <DialogTitle>Save your Webhook Secret</DialogTitle>
+                      <DialogDescription>
+                        Use this secret to verify signatures (X-SaaSForge-Signature) of incoming payloads using HMAC-SHA256.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center space-x-2 bg-muted p-4 rounded-md">
+                      <code className="text-sm flex-1 break-all">{generatedWebhookSecret}</code>
+                      <Button variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(generatedWebhookSecret)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={() => { setIsWebhookDialogOpen(false); setGeneratedWebhookSecret(null); }}>
+                        Done
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                ) : (
+                  <form onSubmit={handleCreateWebhook}>
+
                   <DialogHeader>
                     <DialogTitle>Register Webhook</DialogTitle>
                     <DialogDescription>
@@ -326,6 +377,7 @@ export default function SettingsPage() {
                     </Button>
                   </DialogFooter>
                 </form>
+                )}
               </DialogContent>
             </Dialog>
           </div>
@@ -337,6 +389,7 @@ export default function SettingsPage() {
                   <TableHead>URL</TableHead>
                   <TableHead>Events</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -360,6 +413,9 @@ export default function SettingsPage() {
                           {wh.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => fetchWebhookDeliveries(wh.id)}>Deliveries</Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -382,6 +438,7 @@ export default function SettingsPage() {
                 <TableHead>Method</TableHead>
                 <TableHead>Endpoint</TableHead>
                 <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 <TableHead>Duration</TableHead>
               </TableRow>
             </TableHeader>
@@ -398,6 +455,48 @@ export default function SettingsPage() {
                       <Badge variant={log.status_code >= 400 ? 'destructive' : 'default'}>{log.status_code}</Badge>
                     </TableCell>
                     <TableCell className="text-xs">{log.duration_ms}ms</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeliveriesDialogOpen} onOpenChange={setIsDeliveriesDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Webhook Deliveries</DialogTitle>
+            <DialogDescription>Recent deliveries for this endpoint</DialogDescription>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Event</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {webhookDeliveries.length === 0 ? (
+                <TableRow><TableCell colSpan={4} className="text-center">No deliveries found.</TableCell></TableRow>
+              ) : (
+                webhookDeliveries.map((deliv: any) => (
+                  <TableRow key={deliv.id}>
+                    <TableCell className="text-xs">{new Date(deliv.created_at).toLocaleString()}</TableCell>
+                    <TableCell><Badge variant="outline">{deliv.event_type}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={deliv.success ? 'default' : 'destructive'}>
+                        {deliv.status_code || 'Err'}
+                      </Badge>
+                      {!deliv.success && deliv.error_message && (
+                        <p className="text-xs text-destructive mt-1 truncate max-w-[200px]">{deliv.error_message}</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => replayDelivery(deliv.id)}>Retry</Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}

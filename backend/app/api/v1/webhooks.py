@@ -64,3 +64,15 @@ async def list_webhook_deliveries(
 ) -> list[WebhookDeliveryResponse]:
     """Get delivery history for a webhook endpoint."""
     return await WebhookEndpointService.list_deliveries(session, current_org.id, endpoint_id)  # type: ignore
+
+
+@router.post("/{endpoint_id}/deliveries/{delivery_id}/retry", status_code=status.HTTP_202_ACCEPTED)
+async def replay_webhook_delivery(
+    session: SessionDep,
+    current_org: CurrentOrganization,
+    endpoint_id: UUID,
+    delivery_id: UUID,
+    _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
+) -> None:
+    """Replay a specific webhook delivery."""
+    await WebhookEndpointService.replay_delivery(session, current_org.id, endpoint_id, delivery_id)

@@ -79,6 +79,54 @@ class WebhookEndpointService:
         return list(deliveries.scalars().all())
 
 
+
+    @staticmethod
+    async def replay_delivery(
+        session: AsyncSession, org_id: str | UUID, endpoint_id: str | UUID, delivery_id: str | UUID
+    ) -> None:
+        from app.core.config import settings
+        
+        # Verify endpoint belongs to org
+        endpoint_res = await session.execute(
+            select(WebhookEndpoint).where(
+                WebhookEndpoint.id == str(endpoint_id),
+                WebhookEndpoint.organization_id == str(org_id),
+            )
+        )
+        endpoint = endpoint_res.scalars().first()
+        if not endpoint:
+            raise NotFoundError("WebhookEndpoint")
+
+        # Verify delivery belongs to endpoint
+        delivery_res = await session.execute(
+            select(WebhookDelivery).where(
+                WebhookDelivery.id == str(delivery_id),
+                WebhookDelivery.endpoint_id == str(endpoint.id),
+            )
+        )
+        delivery = delivery_res.scalars().first()
+        if not delivery:
+            raise NotFoundError("WebhookDelivery")
+            
+        if settings.ENVIRONMENT == "test":
+            await WebhookDispatcher._send_webhook_sync_test(
+                session=session,
+                endpoint_id=str(endpoint.id),
+                url=endpoint.url,
+                secret=endpoint.secret,
+                event_type=delivery.event_type,
+                payload=delivery.payload,
+            )
+        else:
+            from app.workers.tasks import send_webhook_task
+            send_webhook_task.delay(
+                endpoint_id=str(endpoint.id),
+                url=endpoint.url,
+                secret=endpoint.secret,
+                event_type=delivery.event_type,
+                payload=delivery.payload,
+            )
+
 class WebhookDispatcher:
     @staticmethod
     def _generate_signature(secret: str, payload_bytes: bytes) -> str:
