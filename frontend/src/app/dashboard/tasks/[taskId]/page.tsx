@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, ArrowLeft, Trash2, Edit2, Paperclip, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -127,7 +127,16 @@ export default function TaskDetailPage() {
     }
   };
 
-  
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm("Are you sure you want to delete this attachment?")) return;
+    try {
+      await api.delete(`/api/v1/attachments/${attachmentId}`);
+      setAttachments(attachments.filter(a => a.id !== attachmentId));
+    } catch (err) {
+      console.error('Failed to delete attachment', err);
+    }
+  };
+
   const handleDownloadAttachment = async (attachment: any) => {
     try {
       const res = await api.get(`/api/v1/attachments/${attachment.id}/download`, {
@@ -142,16 +151,6 @@ export default function TaskDetailPage() {
       link.parentNode?.removeChild(link);
     } catch (err) {
       console.error('Failed to download attachment', err);
-    }
-  };
-
-  const handleDeleteAttachment = async (attachmentId: string) => {
-    if (!confirm("Are you sure you want to delete this attachment?")) return;
-    try {
-      await api.delete(`/api/v1/attachments/${attachmentId}`);
-      setAttachments(attachments.filter(a => a.id !== attachmentId));
-    } catch (err) {
-      console.error('Failed to delete attachment', err);
     }
   };
 
@@ -175,7 +174,77 @@ export default function TaskDetailPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold mb-2">Task not found</h2>
-        <Button 
+        <Button onClick={() => router.push('/dashboard/tasks')}>Back to Tasks</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/dashboard/tasks">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">{task.title}</h1>
+            <Badge variant="outline" className="capitalize">{task.status}</Badge>
+            <Badge variant="secondary" className="capitalize">{task.priority}</Badge>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            Created on {format(new Date(task.created_at), 'PPP')}
+          </p>
+        </div>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Description</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="whitespace-pre-wrap">{task.description || 'No description provided.'}</p>
+        </CardContent>
+      </Card>
+      
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Attachments</h2>
+          <div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleFileUpload}
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Paperclip className="h-4 w-4 mr-2" />}
+              {uploading ? 'Uploading...' : 'Attach File'}
+            </Button>
+          </div>
+        </div>
+        
+        {attachments.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {attachments.map((att) => (
+              <Card key={att.id} className="overflow-hidden group">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="bg-muted p-2 rounded-md">
+                      <Paperclip className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{att.filename}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(att.size)} • {format(new Date(att.created_at), 'MMM d, yyyy')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
                       variant="ghost" 
                       size="icon" 
                       className="h-8 w-8"

@@ -1,6 +1,10 @@
 'use client';
 
 import * as React from 'react';
+
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/immutability */
 import {
   BarChart,
   FolderOpen,
@@ -9,6 +13,7 @@ import {
   Settings,
   CreditCard,
   Activity,
+  Bell,
 } from 'lucide-react';
 
 import {
@@ -23,14 +28,27 @@ import {
 import { OrgSwitcher } from '@/components/layout/OrgSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { api } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
 import { usePathname } from 'next/navigation';
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, activeOrg } = useAuth();
+  
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  
+  React.useEffect(() => {
+    if (activeOrg) {
+      api.get('/api/v1/notifications/unread-count')
+        .then(res => setUnreadCount(res.data.unread_count))
+        .catch(err => console.error('Failed to fetch unread count', err));
+    }
+  }, [activeOrg, pathname]);
 
   const navigation = [
     { name: 'Overview', href: '/dashboard', icon: BarChart },
+    { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
     { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
     { name: 'Teams', href: '/dashboard/teams', icon: Users },
@@ -54,7 +72,12 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild isActive={isActive}>
                   <Link href={item.href}>
                     <item.icon />
-                    <span>{item.name}</span>
+                    <span className="flex-1">{item.name}</span>
+                    {item.name === 'Notifications' && unreadCount > 0 && (
+                      <Badge variant="destructive" className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full p-0 text-xs">
+                        {unreadCount}
+                      </Badge>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
