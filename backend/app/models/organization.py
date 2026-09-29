@@ -23,3 +23,6 @@ class Organization(BaseModel):
     api_keys: Mapped[list["ApiKey"]] = relationship(
         "ApiKey", back_populates="organization", cascade="all, delete-orphan"
     )
+    audit_logs: Mapped[list["AuditLog"]] = relationship(
+        "AuditLog", back_populates="organization", cascade="all, delete-orphan"
+    )

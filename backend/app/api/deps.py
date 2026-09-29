@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -121,6 +121,46 @@ async def get_current_organization(
 
 CurrentOrganization = Annotated[Organization, Depends(get_current_organization)]
 
+
+class ActorContext(BaseModel):
+    actor_id: str
+    actor_type: str
+    ip_address: str | None
+
+
+def get_current_actor(request: Request) -> ActorContext:
+    ip_address = request.client.host if request.client else None
+    
+    # Check if API key is set
+    api_key = getattr(request.state, "api_key", None)
+    if api_key:
+        return ActorContext(
+            actor_id=str(api_key.id),
+            actor_type="api_key",
+            ip_address=ip_address
+        )
+        
+    # Check if user is set
+    org_user = getattr(request.state, "organization_user", None)
+    if org_user:
+        return ActorContext(
+            actor_id=str(org_user.user_id),
+            actor_type="user",
+            ip_address=ip_address
+        )
+        
+    # Fallback to current_user if outside org context
+    user = getattr(request.state, "user", None)
+    if user:
+         return ActorContext(
+            actor_id=str(user.id),
+            actor_type="user",
+            ip_address=ip_address
+        )
+        
+    return ActorContext(actor_id="system", actor_type="system", ip_address=ip_address)
+
+CurrentActor = Annotated[ActorContext, Depends(get_current_actor)]
 
 class RequireRole:
     def __init__(self, allowed_roles: list[str]) -> None:
