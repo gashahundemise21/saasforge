@@ -5,18 +5,22 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import get_utc_now
+from app.models.organization import Organization
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.services.quota import QuotaService
 
 
 class ProjectService:
     @staticmethod
     async def create_project(
-        session: AsyncSession, org_id: str | UUID, project_in: ProjectCreate
+        session: AsyncSession, org: Organization, project_in: ProjectCreate
     ) -> Project:
         """Create a new project for an organization."""
+        await QuotaService.check_project_quota(session, org)
+        
         project = Project(
-            organization_id=str(org_id),
+            organization_id=str(org.id),
             name=project_in.name,
             description=project_in.description,
         )

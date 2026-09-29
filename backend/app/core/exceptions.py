@@ -51,6 +51,12 @@ class ForbiddenError(SaaSForgeError):
     status_code = 403
 
 
+class QuotaExceededError(SaaSForgeError):
+    code = "QUOTA_EXCEEDED"
+    message = "Plan quota exceeded."
+    status_code = 402
+
+
 async def saasforge_exception_handler(request: Request, exc: SaaSForgeError) -> JSONResponse:
     logger.warning("domain_exception", code=exc.code, message=exc.message, path=request.url.path)
     return JSONResponse(

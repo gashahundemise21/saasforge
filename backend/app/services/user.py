@@ -8,6 +8,7 @@ from app.models.organization import Organization
 from app.models.role import Role
 from app.models.user import OrganizationUser, User
 from app.schemas.user import UserCreate, UserInvite, UserUpdate
+from app.services.quota import QuotaService
 
 
 class UserService:
@@ -56,6 +57,8 @@ class UserService:
     async def invite_user_to_org(
         session: AsyncSession, organization: Organization, invite_in: UserInvite
     ) -> User:
+        await QuotaService.check_member_quota(session, organization)
+        
         # Check if role exists
         stmt = select(Role).where(Role.name == invite_in.role_name)
         result = await session.execute(stmt)

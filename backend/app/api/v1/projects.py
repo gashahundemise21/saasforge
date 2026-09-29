@@ -21,7 +21,7 @@ async def create_project(
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> ProjectResponse:
     """Create a new project in the organization."""
-    project = await ProjectService.create_project(session, current_org.id, project_in)
+    project = await ProjectService.create_project(session, current_org, project_in)
     
     await AuditLogService.log_action(
         session=session,
