@@ -8,6 +8,8 @@ from app.schemas.api_request_log import ApiRequestLogResponse
 from app.models.api_request_log import ApiRequestLog
 from sqlalchemy import select
 from app.services.api_key import ApiKeyService
+from app.services.audit_log import AuditLogService
+from app.api.deps import CurrentActor
 
 router = APIRouter()
 
@@ -16,6 +18,7 @@ router = APIRouter()
 async def create_api_key(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     api_key_in: ApiKeyCreate,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> ApiKeyCreateResponse:
@@ -24,6 +27,7 @@ async def create_api_key(
     Requires Admin or Owner role.
     """
     api_key, raw_key = await ApiKeyService.create_api_key(session, current_org.id, api_key_in)
+    await AuditLogService.log_action(session, current_org.id, current_actor, 'create', 'api_key', api_key.id, {'name': api_key.name})
 
     # We create the response dict manually to include raw_key
     response_data = ApiKeyResponse.model_validate(api_key).model_dump()
@@ -48,6 +52,7 @@ async def list_api_keys(
 async def revoke_api_key(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     key_id: UUID,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> None:
@@ -56,12 +61,14 @@ async def revoke_api_key(
     Requires Admin or Owner role.
     """
     await ApiKeyService.revoke_api_key(session, current_org.id, key_id)
+    await AuditLogService.log_action(session, current_org.id, current_actor, 'revoke', 'api_key', key_id)
 
 
 @router.post("/{key_id}/rotate", response_model=ApiKeyCreateResponse)
 async def rotate_api_key(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     key_id: UUID,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> ApiKeyCreateResponse:
@@ -70,6 +77,7 @@ async def rotate_api_key(
     Requires Admin or Owner role.
     """
     api_key, raw_key = await ApiKeyService.rotate_api_key(session, current_org.id, key_id)
+    await AuditLogService.log_action(session, current_org.id, current_actor, 'rotate', 'api_key', key_id)
     response_data = ApiKeyResponse.model_validate(api_key).model_dump()
     response_data["raw_key"] = raw_key
     return ApiKeyCreateResponse(**response_data)
@@ -86,7 +94,6 @@ async def get_api_key_logs(
     Get request logs for an API key.
     """
     # Verify the key belongs to the org
-    await ApiKeyService.rotate_api_key(session, current_org.id, key_id) # Just to check existence? No, that rotates!
     
     # Better check
     from app.models.api_key import ApiKey

@@ -10,6 +10,8 @@ from app.schemas.team import (
     TeamUpdate,
 )
 from app.services.team import TeamService
+from app.services.audit_log import AuditLogService
+from app.api.deps import CurrentActor
 
 router = APIRouter()
 
@@ -28,6 +30,7 @@ async def get_teams(
 async def create_team(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     team_in: TeamCreate,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> TeamResponse:

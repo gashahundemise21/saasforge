@@ -4,6 +4,8 @@ from app.api.deps import CurrentOrganization, CurrentUser, RequireRole, SessionD
 from app.schemas.organization import OrganizationCreate, OrganizationResponse, OrganizationUpdate
 from app.schemas.user import MemberResponse, UserInvite, UserResponse
 from app.services.organization import OrganizationService
+from app.services.audit_log import AuditLogService
+from app.api.deps import CurrentActor
 
 router = APIRouter()
 
@@ -68,6 +70,7 @@ async def read_organization_members(
 async def invite_user(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     invite_in: UserInvite,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> UserResponse:

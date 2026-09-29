@@ -56,7 +56,8 @@ interface TeamInvitation {
 export default function TeamDetailsPage({ params }: { params: Promise<{ teamId: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const { activeOrgSlug } = useAuth();
+  const { activeOrg } = useAuth();
+  const activeOrgSlug = activeOrg?.slug;
   
   const [team, setTeam] = useState<any>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -89,10 +90,10 @@ export default function TeamDetailsPage({ params }: { params: Promise<{ teamId: 
   }, [resolvedParams.teamId, router]);
 
   useEffect(() => {
-    if (activeOrgSlug) {
+    if (activeOrg?.slug) {
       fetchData();
     }
-  }, [activeOrgSlug, fetchData]);
+  }, [activeOrg?.slug, fetchData]);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +123,7 @@ export default function TeamDetailsPage({ params }: { params: Promise<{ teamId: 
     }
   };
 
-  if (!activeOrgSlug || loading) return <div className="p-8">Loading...</div>;
+  if (!activeOrg?.slug || loading) return <div className="p-8">Loading...</div>;
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">

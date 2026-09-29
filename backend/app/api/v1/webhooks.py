@@ -10,6 +10,8 @@ from app.schemas.webhook import (
     WebhookEndpointResponse,
 )
 from app.services.webhook import WebhookEndpointService
+from app.services.audit_log import AuditLogService
+from app.api.deps import CurrentActor
 
 router = APIRouter()
 
@@ -22,11 +24,13 @@ router = APIRouter()
 async def create_webhook(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     webhook_in: WebhookEndpointCreate,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> WebhookEndpointCreateResponse:
     """Create a new webhook endpoint. Returns the secret once."""
     endpoint = await WebhookEndpointService.create_endpoint(session, current_org.id, webhook_in)
+    await AuditLogService.log_action(session, current_org.id, current_actor, 'create', 'webhook', endpoint.id, {'url': endpoint.url, 'events': endpoint.events})
 
     # Dump attributes and merge with secret
     response_data = WebhookEndpointResponse.model_validate(endpoint).model_dump()
@@ -48,11 +52,13 @@ async def list_webhooks(
 async def delete_webhook(
     session: SessionDep,
     current_org: CurrentOrganization,
+    current_actor: CurrentActor,
     endpoint_id: UUID,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> None:
     """Delete a webhook endpoint."""
     await WebhookEndpointService.delete_endpoint(session, current_org.id, endpoint_id)
+    await AuditLogService.log_action(session, current_org.id, current_actor, 'delete', 'webhook', endpoint_id)
 
 
 @router.get("/{endpoint_id}/deliveries", response_model=list[WebhookDeliveryResponse])

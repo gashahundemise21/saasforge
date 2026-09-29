@@ -16,17 +16,22 @@ class ApiLoggingMiddleware(BaseHTTPMiddleware):
         # We only log if it was an API key request
         api_key = getattr(request.state, "api_key", None)
         if api_key:
-            async with AsyncSessionLocal() as session:
-                log = ApiRequestLog(
-                    api_key_id=str(api_key.id),
-                    endpoint=request.url.path,
-                    method=request.method,
-                    status_code=response.status_code,
-                    ip_address=request.client.host if request.client else None,
-                    user_agent=request.headers.get("user-agent"),
-                    duration_ms=process_time_ms
-                )
-                session.add(log)
-                await session.commit()
+            try:
+                async with AsyncSessionLocal() as session:
+                    log = ApiRequestLog(
+                        api_key_id=str(api_key.id),
+                        endpoint=request.url.path,
+                        method=request.method,
+                        status_code=response.status_code,
+                        ip_address=request.client.host if request.client else None,
+                        user_agent=request.headers.get("user-agent"),
+                        duration_ms=process_time_ms
+                    )
+                    session.add(log)
+                    await session.commit()
+            except Exception as e:
+                # Suppress errors in API logging so they don't break the response
+                import logging
+                logging.error(f"Failed to log API request: {e}")
                 
         return response

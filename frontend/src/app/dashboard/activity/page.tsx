@@ -13,21 +13,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 /* eslint-disable react-hooks/set-state-in-effect */
 
 export default function ActivityFeedPage() {
-  const { activeOrg, role } = useAuth();
+  const { activeOrg } = useAuth();
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeOrg) {
-      if (role === 'Owner' || role === 'Admin') {
-        fetchActivity();
-      } else {
-        setError("You don't have permission to view organization activity.");
-        setLoading(false);
-      }
+      fetchActivity();
     }
-  }, [activeOrg, role]);
+  }, [activeOrg]);
 
   const fetchActivity = async () => {
     try {

@@ -43,7 +43,8 @@ interface Team {
 }
 
 export default function TeamsPage() {
-  const { activeOrgSlug } = useAuth();
+  const { activeOrg } = useAuth();
+  const activeOrgSlug = activeOrg?.slug;
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -66,10 +67,10 @@ export default function TeamsPage() {
   }, []);
 
   useEffect(() => {
-    if (activeOrgSlug) {
+    if (activeOrg?.slug) {
       fetchTeams();
     }
-  }, [activeOrgSlug, fetchTeams]);
+  }, [activeOrg?.slug, fetchTeams]);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +91,7 @@ export default function TeamsPage() {
     }
   };
 
-  if (!activeOrgSlug) return null;
+  if (!activeOrg?.slug) return null;
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">

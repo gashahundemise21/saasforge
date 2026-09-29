@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userRes.data);
 
       // 2. Fetch user's organizations
-      const orgsRes = await api.get('/api/v1/organizations');
+      const orgsRes = await api.get('/api/v1/organizations/me');
       const fetchedOrgs = orgsRes.data;
       setOrganizations(fetchedOrgs);
 

@@ -252,7 +252,7 @@ export default function TaskDetailPage() {
                     >
                       <Download className="h-4 w-4 text-muted-foreground" />
                     </Button>
-                    {(user?.id === att.uploader_id || user?.role === 'Owner' || user?.role === 'Admin') && (
+                    {(user?.id === att.uploader_id || user?.is_superuser) && (
                       <Button 
                         variant="ghost" 
                         size="icon" 
