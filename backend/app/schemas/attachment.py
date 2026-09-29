@@ -1,5 +1,7 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
+
+from pydantic import BaseModel, ConfigDict
+
 
 class AttachmentBase(BaseModel):
     filename: str
@@ -8,10 +10,12 @@ class AttachmentBase(BaseModel):
     task_id: str | None = None
     project_id: str | None = None
 
+
 class AttachmentCreate(AttachmentBase):
     file_path: str
     uploader_id: str
     organization_id: str
+
 
 class AttachmentResponse(AttachmentBase):
     id: str

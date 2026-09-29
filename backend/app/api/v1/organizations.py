@@ -17,7 +17,9 @@ async def create_organization(
 
 
 @router.get("/me", response_model=list[OrganizationResponse])
-async def get_my_organizations(session: SessionDep, current_user: CurrentUser) -> list[OrganizationResponse]:
+async def get_my_organizations(
+    session: SessionDep, current_user: CurrentUser
+) -> list[OrganizationResponse]:
     """Get all organizations the current user belongs to."""
     return await OrganizationService.get_user_organizations(session, current_user.id)  # type: ignore
 
@@ -50,6 +52,7 @@ async def read_organization_members(
 ) -> list[MemberResponse]:
     """Get list of members in the organization."""
     from app.services.user import UserService
+
     org_users = await UserService.get_organization_members(session, current_org.id)
     return [
         MemberResponse(
@@ -70,4 +73,5 @@ async def invite_user(
 ) -> UserResponse:
     """Invite a user to the organization. Requires Owner or Admin role."""
     from app.services.user import UserService
+
     return await UserService.invite_user_to_org(session, current_org, invite_in)  # type: ignore

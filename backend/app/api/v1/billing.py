@@ -56,7 +56,7 @@ async def stripe_webhook(
     stripe_signature: str = Header(..., alias="Stripe-Signature"),
 ) -> dict[str, Any]:
     """
-    Stripe Webhook Endpoint. 
+    Stripe Webhook Endpoint.
     Receives events from Stripe securely using signature verification.
     """
     payload = await request.body()

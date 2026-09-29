@@ -16,7 +16,7 @@ class ApiKeyService:
     ) -> tuple[ApiKey, str]:
         """Create a new API key for the organization and return (ApiKey, raw_secret)."""
         prefix, raw_key, hashed_key = generate_api_key()
-        
+
         api_key = ApiKey(
             organization_id=str(org_id),
             name=api_key_in.name,
@@ -27,7 +27,7 @@ class ApiKeyService:
         session.add(api_key)
         await session.commit()
         await session.refresh(api_key)
-        
+
         return api_key, raw_key
 
     @staticmethod
@@ -55,6 +55,6 @@ class ApiKeyService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API Key not found or already revoked",
             )
-            
+
         api_key.is_active = False
         await session.commit()

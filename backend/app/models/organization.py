@@ -12,10 +12,12 @@ class Organization(BaseModel):
     name: Mapped[str] = mapped_column(String(255), index=True)
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+
     # Billing fields
     stripe_customer_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
-    stripe_subscription_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(
+        String(100), unique=True, nullable=True
+    )
     plan_id: Mapped[str] = mapped_column(String(50), default="free")
     subscription_status: Mapped[str] = mapped_column(String(50), default="active")
 

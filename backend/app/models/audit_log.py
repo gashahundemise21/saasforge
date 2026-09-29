@@ -12,11 +12,11 @@ class AuditLog(BaseModel):
 
     actor_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
     actor_type: Mapped[str] = mapped_column(String, nullable=False)  # "user" or "api_key"
-    
+
     action: Mapped[str] = mapped_column(String, index=True, nullable=False)
     resource_type: Mapped[str] = mapped_column(String, index=True, nullable=False)
     resource_id: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
-    
+
     details: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String, nullable=True)
 

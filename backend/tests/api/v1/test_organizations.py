@@ -19,7 +19,7 @@ async def test_create_organization(auth_client: AsyncClient):
 async def test_get_my_organizations(auth_client: AsyncClient):
     # Create one
     await auth_client.post("/api/v1/organizations", json={"name": "Org 1"})
-    
+
     response = await auth_client.get("/api/v1/organizations/me")
     assert response.status_code == 200
     data = response.json()
@@ -32,9 +32,9 @@ async def test_get_organization_details(auth_client: AsyncClient):
     create_resp = await auth_client.post("/api/v1/organizations", json={"name": "Org Details"})
     org = create_resp.json()
     org_slug = org["slug"]
-    
+
     auth_client.headers.update({"X-Organization-Slug": org_slug})
-    
+
     response = await auth_client.get(f"/api/v1/organizations/{org['id']}")
     assert response.status_code == 200
     data = response.json()
@@ -46,10 +46,12 @@ async def test_update_organization(auth_client: AsyncClient):
     create_resp = await auth_client.post("/api/v1/organizations", json={"name": "Org Update"})
     org = create_resp.json()
     org_slug = org["slug"]
-    
+
     auth_client.headers.update({"X-Organization-Slug": org_slug})
-    
-    response = await auth_client.patch(f"/api/v1/organizations/{org['id']}", json={"name": "Updated Org"})
+
+    response = await auth_client.patch(
+        f"/api/v1/organizations/{org['id']}", json={"name": "Updated Org"}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Updated Org"

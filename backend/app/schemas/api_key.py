@@ -26,4 +26,5 @@ class ApiKeyResponse(ApiKeyBase):
 
 class ApiKeyCreateResponse(ApiKeyResponse):
     """Returned only once upon creation with the unhashed secret key."""
+
     raw_key: str

@@ -58,7 +58,7 @@ class UserService:
         session: AsyncSession, organization: Organization, invite_in: UserInvite
     ) -> User:
         await QuotaService.check_member_quota(session, organization)
-        
+
         # Check if role exists
         stmt = select(Role).where(Role.name == invite_in.role_name)
         result = await session.execute(stmt)
@@ -86,7 +86,9 @@ class UserService:
         result = await session.execute(stmt)
         org_user = result.scalar_one_or_none()
         if org_user:
-            raise SaaSForgeError(detail="User is already a member of this organization", status_code=400)
+            raise SaaSForgeError(
+                detail="User is already a member of this organization", status_code=400
+            )
 
         # Add user to organization
         new_org_user = OrganizationUser(
@@ -100,7 +102,9 @@ class UserService:
         return user
 
     @staticmethod
-    async def get_organization_members(session: AsyncSession, org_id: str) -> list[OrganizationUser]:
+    async def get_organization_members(
+        session: AsyncSession, org_id: str
+    ) -> list[OrganizationUser]:
         stmt = (
             select(OrganizationUser)
             .options(selectinload(OrganizationUser.user), selectinload(OrganizationUser.role))

@@ -34,18 +34,14 @@ class WebhookEndpointService:
         return endpoint
 
     @staticmethod
-    async def get_org_endpoints(
-        session: AsyncSession, org_id: str | UUID
-    ) -> list[WebhookEndpoint]:
+    async def get_org_endpoints(session: AsyncSession, org_id: str | UUID) -> list[WebhookEndpoint]:
         result = await session.execute(
             select(WebhookEndpoint).where(WebhookEndpoint.organization_id == str(org_id))
         )
         return list(result.scalars().all())
 
     @staticmethod
-    async def delete_endpoint(
-        session: AsyncSession, org_id: str | UUID, endpoint_id: UUID
-    ) -> None:
+    async def delete_endpoint(session: AsyncSession, org_id: str | UUID, endpoint_id: UUID) -> None:
         result = await session.execute(
             select(WebhookEndpoint).where(
                 WebhookEndpoint.id == str(endpoint_id),
@@ -140,10 +136,12 @@ class WebhookDispatcher:
             session.add(delivery)
             await session.commit()
 
+        if not success:
+            raise Exception(f"Webhook delivery failed: {error_message}")
+
     @staticmethod
     async def dispatch_event(
         session: AsyncSession,
-        background_tasks: Any,
         org_id: str | UUID,
         event_type: str,
         payload: dict[str, Any],
@@ -183,8 +181,9 @@ class WebhookDispatcher:
                         payload=payload,
                     )
                 else:
-                    background_tasks.add_task(
-                        WebhookDispatcher._send_webhook,
+                    from app.workers.tasks import send_webhook_task
+
+                    send_webhook_task.delay(
                         endpoint_id=str(endpoint.id),
                         url=endpoint.url,
                         secret=endpoint.secret,

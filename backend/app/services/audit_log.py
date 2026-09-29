@@ -5,7 +5,6 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ActorContext
-from app.db.session import AsyncSessionLocal
 from app.models.audit_log import AuditLog
 
 

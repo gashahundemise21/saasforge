@@ -54,12 +54,18 @@ class BillingService:
         return checkout_session.url  # type: ignore
 
     @staticmethod
-    async def create_portal_session(session: AsyncSession, org_id: str | UUID, return_url: str) -> str:
+    async def create_portal_session(
+        session: AsyncSession, org_id: str | UUID, return_url: str
+    ) -> str:
         """Create a Stripe Customer Portal Session for managing billing."""
         org = await BillingService._get_org(session, org_id)
 
         if not org.stripe_customer_id:
-            raise SaaSForgeError("Organization does not have a billing customer associated.", code="NO_BILLING_CUSTOMER", status_code=400)
+            raise SaaSForgeError(
+                "Organization does not have a billing customer associated.",
+                code="NO_BILLING_CUSTOMER",
+                status_code=400,
+            )
 
         portal_session = stripe.billing_portal.Session.create(
             customer=org.stripe_customer_id,
@@ -80,7 +86,10 @@ class BillingService:
             raise SaaSForgeError(f"Invalid signature: {e}", status_code=400)
 
         # Handle the event
-        if event["type"] == "customer.subscription.created" or event["type"] == "customer.subscription.updated":
+        if (
+            event["type"] == "customer.subscription.created"
+            or event["type"] == "customer.subscription.updated"
+        ):
             subscription = event["data"]["object"]
             await BillingService._sync_subscription(session, subscription)
         elif event["type"] == "customer.subscription.deleted":
@@ -110,7 +119,7 @@ class BillingService:
         items = subscription.get("items", {}).get("data", [])
         if items:
             org.plan_id = items[0]["price"]["id"]
-        
+
         # If deleted/canceled, fallback to free
         if status in ["canceled", "unpaid"]:
             org.plan_id = "free"

@@ -18,7 +18,7 @@ class TaskService:
         """Create a new task in a project."""
         # Validate project exists and belongs to org
         await ProjectService.get_project(session, org_id, project_id)
-        
+
         # Validate assignee belongs to org if specified
         if task_in.assignee_id:
             result = await session.execute(
@@ -46,32 +46,30 @@ class TaskService:
         return task
 
     @staticmethod
-    async def get_project_tasks(session: AsyncSession, org_id: str | UUID, project_id: str | UUID) -> list[Task]:
+    async def get_project_tasks(
+        session: AsyncSession, org_id: str | UUID, project_id: str | UUID
+    ) -> list[Task]:
         """Get all tasks for a project."""
         # Validate project
         await ProjectService.get_project(session, org_id, project_id)
-        
-        result = await session.execute(
-            select(Task).where(Task.project_id == str(project_id))
-        )
+
+        result = await session.execute(select(Task).where(Task.project_id == str(project_id)))
         return list(result.scalars().all())
 
     @staticmethod
     async def get_task(session: AsyncSession, org_id: str | UUID, task_id: str | UUID) -> Task:
         """Get a specific task. Validates that the task's project belongs to the org."""
-        result = await session.execute(
-            select(Task).where(Task.id == str(task_id))
-        )
+        result = await session.execute(select(Task).where(Task.id == str(task_id)))
         task = result.scalars().first()
         if not task:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
-            
+
         # Validate task's project belongs to org
         await ProjectService.get_project(session, org_id, task.project_id)
-        
+
         return task
 
     @staticmethod
@@ -80,7 +78,7 @@ class TaskService:
     ) -> Task:
         """Update a task."""
         task = await TaskService.get_task(session, org_id, task_id)
-        
+
         if task_in.assignee_id:
             result = await session.execute(
                 select(OrganizationUser)
@@ -93,14 +91,14 @@ class TaskService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Assignee must be a member of the organization",
                 )
-        
+
         update_data = task_in.model_dump(exclude_unset=True)
         if "assignee_id" in update_data and update_data["assignee_id"]:
             update_data["assignee_id"] = str(update_data["assignee_id"])
-            
+
         for field, value in update_data.items():
             setattr(task, field, value)
-            
+
         await session.commit()
         await session.refresh(task)
         return task

@@ -3,7 +3,6 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import SaaSForgeError
 from app.models.organization import Organization
@@ -32,9 +31,11 @@ class OrganizationService:
         stmt = select(Role).where(Role.name == "Owner")
         result = await session.execute(stmt)
         owner_role = result.scalar_one_or_none()
-        
+
         if not owner_role:
-            raise SaaSForgeError(detail="Owner role not found in database. Run seed_roles.py", status_code=500)
+            raise SaaSForgeError(
+                detail="Owner role not found in database. Run seed_roles.py", status_code=500
+            )
 
         # Link user to organization as Owner
         org_user = OrganizationUser(
@@ -61,10 +62,12 @@ class OrganizationService:
     async def update_organization(
         session: AsyncSession, org_id: str, org_in: OrganizationUpdate
     ) -> Organization:
-        stmt = select(Organization).where(Organization.id == org_id, Organization.deleted_at.is_(None))
+        stmt = select(Organization).where(
+            Organization.id == org_id, Organization.deleted_at.is_(None)
+        )
         result = await session.execute(stmt)
         organization = result.scalar_one_or_none()
-        
+
         if not organization:
             raise SaaSForgeError(detail="Organization not found", status_code=404)
 

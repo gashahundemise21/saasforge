@@ -105,7 +105,11 @@ async def get_team_invitations(
     return await TeamService.get_team_invitations(session, team_id, current_org.id)  # type: ignore
 
 
-@router.post("/{team_id}/invitations", response_model=TeamInvitationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{team_id}/invitations",
+    response_model=TeamInvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_team_invitation(
     team_id: str,
     invite_in: TeamInvitationCreate,
@@ -126,14 +130,17 @@ async def accept_team_invitation(
     """Accept a team invitation. Organization header is not strictly required here."""
     member = await TeamService.handle_invitation(session, token, current_user, accept=True)
     # Load user explicitly for the response
-    from sqlalchemy.orm import selectinload
     from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+
     from app.models.team import TeamMember
-    
-    stmt = select(TeamMember).options(selectinload(TeamMember.user)).where(TeamMember.id == member.id) # type: ignore
+
+    stmt = (
+        select(TeamMember).options(selectinload(TeamMember.user)).where(TeamMember.id == member.id)
+    )  # type: ignore
     result = await session.execute(stmt)
     full_member = result.scalar_one()
-    
+
     return full_member  # type: ignore
 
 
@@ -145,4 +152,3 @@ async def reject_team_invitation(
 ) -> None:
     """Reject a team invitation."""
     await TeamService.handle_invitation(session, token, current_user, accept=False)
-

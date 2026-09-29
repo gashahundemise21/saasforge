@@ -15,15 +15,16 @@ async def test_audit_logs_lifecycle(auth_client: AsyncClient):
 
     # Wait briefly for BackgroundTasks to commit to the DB
     import asyncio
+
     await asyncio.sleep(0.1)
 
     # Fetch audit logs
     logs_resp = await auth_client.get("/api/v1/audit-logs")
     assert logs_resp.status_code == 200
-    
+
     logs = logs_resp.json()
     assert len(logs) == 1
-    
+
     log = logs[0]
     assert log["organization_id"] == org["id"]
     assert log["action"] == "project.created"
@@ -33,15 +34,17 @@ async def test_audit_logs_lifecycle(auth_client: AsyncClient):
 
     # Trigger action: update a project
     proj_id = proj_resp.json()["id"]
-    update_resp = await auth_client.patch(f"/api/v1/projects/{proj_id}", json={"name": "Updated Audited Project"})
+    update_resp = await auth_client.patch(
+        f"/api/v1/projects/{proj_id}", json={"name": "Updated Audited Project"}
+    )
     assert update_resp.status_code == 200
-    
+
     await asyncio.sleep(0.1)
-    
+
     # Fetch audit logs again
     logs_resp = await auth_client.get("/api/v1/audit-logs")
     logs = logs_resp.json()
-    
+
     # order is descending, so latest is first
     assert len(logs) == 2
     assert logs[0]["action"] == "project.updated"

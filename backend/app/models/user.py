@@ -20,9 +20,7 @@ class User(BaseModel):
     organizations: Mapped[list["OrganizationUser"]] = relationship(
         "OrganizationUser", back_populates="user", cascade="all, delete-orphan"
     )
-    assigned_tasks: Mapped[list["Task"]] = relationship(
-        "Task", back_populates="assignee"
-    )
+    assigned_tasks: Mapped[list["Task"]] = relationship("Task", back_populates="assignee")
 
 
 class OrganizationUser(BaseModel):

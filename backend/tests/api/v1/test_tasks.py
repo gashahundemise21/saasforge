@@ -10,10 +10,10 @@ async def test_create_task(auth_client: AsyncClient):
 
     proj_resp = await auth_client.post("/api/v1/projects", json={"name": "Proj Task"})
     proj = proj_resp.json()
-    
+
     task_resp = await auth_client.post(
         f"/api/v1/projects/{proj['id']}/tasks",
-        json={"title": "My Task", "description": "Do something"}
+        json={"title": "My Task", "description": "Do something"},
     )
     assert task_resp.status_code == 201
     task = task_resp.json()
@@ -29,20 +29,18 @@ async def test_update_task_assignee(auth_client: AsyncClient):
 
     proj_resp = await auth_client.post("/api/v1/projects", json={"name": "Proj Assign"})
     proj = proj_resp.json()
-    
+
     task_resp = await auth_client.post(
-        f"/api/v1/projects/{proj['id']}/tasks",
-        json={"title": "Assign Task"}
+        f"/api/v1/projects/{proj['id']}/tasks", json={"title": "Assign Task"}
     )
     task = task_resp.json()
-    
+
     # Get current user
     me_resp = await auth_client.get("/api/v1/users/me")
     me = me_resp.json()
-    
+
     update_resp = await auth_client.patch(
-        f"/api/v1/tasks/{task['id']}",
-        json={"assignee_id": me["id"], "status": "in_progress"}
+        f"/api/v1/tasks/{task['id']}", json={"assignee_id": me["id"], "status": "in_progress"}
     )
     assert update_resp.status_code == 200
     updated = update_resp.json()

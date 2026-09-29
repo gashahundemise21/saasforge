@@ -29,13 +29,14 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
 import secrets
 import string
 
+
 def generate_api_key(prefix: str = "sk_live") -> tuple[str, str, str]:
     """Generates an API key and returns (prefix, unhashed_key, hashed_key)."""
     random_part = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
     raw_key = f"{prefix}_{random_part}"
-    
+
     # We use the raw key except for the prefix when hashing, but for simplicity
     # just hash the entire raw key.
     hashed_key = get_password_hash(raw_key)
-    
+
     return prefix, raw_key, hashed_key

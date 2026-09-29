@@ -24,7 +24,7 @@ class QuotaService:
         if current_count >= limit:
             raise QuotaExceededError(
                 message=f"Project quota exceeded. Your plan allows {limit} projects.",
-                code="PROJECT_QUOTA_EXCEEDED"
+                code="PROJECT_QUOTA_EXCEEDED",
             )
 
     @staticmethod
@@ -35,12 +35,14 @@ class QuotaService:
             return  # Unlimited
 
         result = await session.execute(
-            select(func.count(OrganizationUser.id)).where(OrganizationUser.organization_id == org.id)
+            select(func.count(OrganizationUser.id)).where(
+                OrganizationUser.organization_id == org.id
+            )
         )
         current_count = result.scalar() or 0
 
         if current_count >= limit:
             raise QuotaExceededError(
                 message=f"Member quota exceeded. Your plan allows {limit} members.",
-                code="MEMBER_QUOTA_EXCEEDED"
+                code="MEMBER_QUOTA_EXCEEDED",
             )

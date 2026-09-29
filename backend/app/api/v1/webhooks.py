@@ -27,7 +27,7 @@ async def create_webhook(
 ) -> WebhookEndpointCreateResponse:
     """Create a new webhook endpoint. Returns the secret once."""
     endpoint = await WebhookEndpointService.create_endpoint(session, current_org.id, webhook_in)
-    
+
     # Dump attributes and merge with secret
     response_data = WebhookEndpointResponse.model_validate(endpoint).model_dump()
     response_data["secret"] = endpoint.secret

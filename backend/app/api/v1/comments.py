@@ -1,6 +1,5 @@
-from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, status
 
 from app.api.deps import CurrentActor, CurrentOrganization, SessionDep
 from app.schemas.comment import CommentCreate, CommentResponse, CommentUpdate
@@ -11,7 +10,7 @@ router = APIRouter()
 
 @router.get(
     "/tasks/{task_id}",
-    response_model=List[CommentResponse],
+    response_model=list[CommentResponse],
 )
 async def get_task_comments(
     task_id: str,
@@ -19,9 +18,7 @@ async def get_task_comments(
     org: CurrentOrganization,
 ):
     """Get all comments for a specific task."""
-    return await CommentService.get_comments_for_task(
-        db=session, task_id=task_id, org_id=org.id
-    )
+    return await CommentService.get_comments_for_task(db=session, task_id=task_id, org_id=org.id)
 
 
 @router.post(

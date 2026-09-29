@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "super-secret-development-key-please-change-in-prod"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
+
     # Stripe
     STRIPE_API_KEY: str = "sk_test_placeholder"
     STRIPE_WEBHOOK_SECRET: str = "whsec_placeholder"

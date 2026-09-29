@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-import stripe
 from httpx import AsyncClient
 
 
@@ -20,7 +19,9 @@ async def test_create_checkout_session(auth_client: AsyncClient, mock_stripe: Ma
 
     # Mock stripe customer and checkout
     mock_stripe.Customer.create.return_value = MagicMock(id="cus_test123")
-    mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://checkout.stripe.com/test")
+    mock_stripe.checkout.Session.create.return_value = MagicMock(
+        url="https://checkout.stripe.com/test"
+    )
 
     # Create checkout
     resp = await auth_client.post(
@@ -48,11 +49,13 @@ async def test_create_checkout_session(auth_client: AsyncClient, mock_stripe: Ma
 
 
 @pytest.mark.asyncio
-async def test_stripe_webhook_subscription_updated(auth_client: AsyncClient, mock_stripe: MagicMock):
+async def test_stripe_webhook_subscription_updated(
+    auth_client: AsyncClient, mock_stripe: MagicMock
+):
     # Setup Org
     org_resp = await auth_client.post("/api/v1/organizations", json={"name": "Webhook Org"})
     org = org_resp.json()
-    
+
     # We need to manually set the stripe_customer_id in DB to match the webhook,
     # or just trigger a checkout first to set it.
     auth_client.headers.update({"X-Organization-Slug": org["slug"]})
@@ -60,9 +63,9 @@ async def test_stripe_webhook_subscription_updated(auth_client: AsyncClient, moc
     mock_stripe.checkout.Session.create.return_value = MagicMock(url="https://test")
     await auth_client.post(
         "/api/v1/billing/checkout",
-        json={"plan_id": "price_123", "success_url": "http://test", "cancel_url": "http://test"}
+        json={"plan_id": "price_123", "success_url": "http://test", "cancel_url": "http://test"},
     )
-    
+
     # Prepare webhook payload
     payload = {
         "type": "customer.subscription.updated",
@@ -71,23 +74,19 @@ async def test_stripe_webhook_subscription_updated(auth_client: AsyncClient, moc
                 "id": "sub_123",
                 "customer": "cus_wh_123",
                 "status": "active",
-                "items": {
-                    "data": [
-                        {"price": {"id": "price_pro"}}
-                    ]
-                }
+                "items": {"data": [{"price": {"id": "price_pro"}}]},
             }
-        }
+        },
     }
 
     # Mock the Webhook signature verifier to return the payload instead of throwing
     mock_stripe.Webhook.construct_event.return_value = payload
-    
+
     # Post webhook
     resp = await auth_client.post(
         "/api/v1/billing/webhook",
         json=payload,
-        headers={"Stripe-Signature": "t=123,v1=signature_test"}
+        headers={"Stripe-Signature": "t=123,v1=signature_test"},
     )
     assert resp.status_code == 200
 

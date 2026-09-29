@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from typing import List
 
 from fastapi import status
 from sqlalchemy import select
@@ -8,20 +7,20 @@ from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import SaaSForgeError
 from app.models.comment import Comment
-from app.models.task import Task
 from app.models.project import Project
+from app.models.task import Task
 from app.schemas.comment import CommentCreate, CommentUpdate
 
 
 class CommentService:
     @staticmethod
-    async def _get_task_and_verify_access(
-        db: AsyncSession, task_id: str, org_id: str
-    ) -> Task:
+    async def _get_task_and_verify_access(db: AsyncSession, task_id: str, org_id: str) -> Task:
         stmt = (
             select(Task)
             .join(Project, Task.project_id == Project.id)
-            .where(Task.id == task_id, Project.organization_id == org_id,  Project.deleted_at.is_(None))
+            .where(
+                Task.id == task_id, Project.organization_id == org_id, Project.deleted_at.is_(None)
+            )
         )
         result = await db.execute(stmt)
         task = result.scalar_one_or_none()
@@ -34,9 +33,7 @@ class CommentService:
         return task
 
     @staticmethod
-    async def get_comments_for_task(
-        db: AsyncSession, task_id: str, org_id: str
-    ) -> List[Comment]:
+    async def get_comments_for_task(db: AsyncSession, task_id: str, org_id: str) -> list[Comment]:
         # Verify access
         await CommentService._get_task_and_verify_access(db, task_id, org_id)
 
@@ -88,7 +85,7 @@ class CommentService:
             .where(
                 Comment.id == comment_id,
                 Project.organization_id == org_id,
-                Comment.deleted_at.is_(None)
+                Comment.deleted_at.is_(None),
             )
             .options(selectinload(Comment.author))
         )
@@ -129,7 +126,7 @@ class CommentService:
             .where(
                 Comment.id == comment_id,
                 Project.organization_id == org_id,
-                Comment.deleted_at.is_(None)
+                Comment.deleted_at.is_(None),
             )
         )
         result = await db.execute(stmt)

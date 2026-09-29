@@ -18,7 +18,7 @@ class ProjectService:
     ) -> Project:
         """Create a new project for an organization."""
         await QuotaService.check_project_quota(session, org)
-        
+
         project = Project(
             organization_id=str(org.id),
             name=project_in.name,
@@ -40,7 +40,9 @@ class ProjectService:
         return list(result.scalars().all())
 
     @staticmethod
-    async def get_project(session: AsyncSession, org_id: str | UUID, project_id: str | UUID) -> Project:
+    async def get_project(
+        session: AsyncSession, org_id: str | UUID, project_id: str | UUID
+    ) -> Project:
         """Get a specific project."""
         result = await session.execute(
             select(Project)
@@ -62,17 +64,19 @@ class ProjectService:
     ) -> Project:
         """Update a project."""
         project = await ProjectService.get_project(session, org_id, project_id)
-        
+
         update_data = project_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(project, field, value)
-            
+
         await session.commit()
         await session.refresh(project)
         return project
 
     @staticmethod
-    async def delete_project(session: AsyncSession, org_id: str | UUID, project_id: str | UUID) -> None:
+    async def delete_project(
+        session: AsyncSession, org_id: str | UUID, project_id: str | UUID
+    ) -> None:
         """Soft delete a project."""
         project = await ProjectService.get_project(session, org_id, project_id)
         project.deleted_at = get_utc_now()

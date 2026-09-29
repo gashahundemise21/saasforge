@@ -1,7 +1,8 @@
+import os
 from collections.abc import AsyncGenerator
 
 import pytest
-import os
+
 os.environ["ENVIRONMENT"] = "test"
 
 from httpx import ASGITransport, AsyncClient
@@ -21,15 +22,15 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.connect() as conn:
         await conn.begin()
         await conn.begin_nested()
-        
+
         async_session = AsyncSession(conn, expire_on_commit=False)
-        
+
         @pytest.hookimpl
         def pytest_exception_interact() -> None:
             pass
-            
+
         yield async_session
-        
+
         await async_session.close()
         await conn.rollback()
 
@@ -47,9 +48,9 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
 
 @pytest.fixture
 async def test_user(db_session: AsyncSession) -> "User":
-    from app.models.user import User
     from app.core.security import get_password_hash
-    
+    from app.models.user import User
+
     user = User(
         email="auth@example.com",
         hashed_password=get_password_hash("testpassword"),
@@ -64,7 +65,7 @@ async def test_user(db_session: AsyncSession) -> "User":
 @pytest.fixture
 async def auth_client(async_client: AsyncClient, test_user: "User") -> AsyncClient:
     from app.core.security import create_access_token
-    
+
     token = create_access_token(test_user.id)
     async_client.headers.update({"Authorization": f"Bearer {token}"})
     return async_client

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.deps import CurrentActor, CurrentOrganization, RequireRole, SessionDep
 from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
@@ -17,12 +17,11 @@ async def create_project(
     current_org: CurrentOrganization,
     current_actor: CurrentActor,
     project_in: ProjectCreate,
-    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> ProjectResponse:
     """Create a new project in the organization."""
     project = await ProjectService.create_project(session, current_org, project_in)
-    
+
     await AuditLogService.log_action(
         session=session,
         org_id=current_org.id,
@@ -30,18 +29,17 @@ async def create_project(
         action="project.created",
         resource_type="project",
         resource_id=project.id,
-        details={"name": project.name}
+        details={"name": project.name},
     )
-    
+
     await WebhookDispatcher.dispatch_event(
         session=session,
-        background_tasks=background_tasks,
         org_id=current_org.id,
         event_type="project.created",
         payload={"project_id": str(project.id), "name": project.name},
     )
     await session.commit()
-    
+
     return project  # type: ignore
 
 
@@ -73,12 +71,11 @@ async def update_project(
     current_actor: CurrentActor,
     project_id: UUID,
     project_in: ProjectUpdate,
-    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> ProjectResponse:
     """Update a project."""
     project = await ProjectService.update_project(session, current_org.id, project_id, project_in)
-    
+
     await AuditLogService.log_action(
         session=session,
         org_id=current_org.id,
@@ -86,18 +83,20 @@ async def update_project(
         action="project.updated",
         resource_type="project",
         resource_id=project.id,
-        details=project_in.model_dump(exclude_unset=True)
+        details=project_in.model_dump(exclude_unset=True),
     )
-    
+
     await WebhookDispatcher.dispatch_event(
         session=session,
-        background_tasks=background_tasks,
         org_id=current_org.id,
         event_type="project.updated",
-        payload={"project_id": str(project.id), "changes": project_in.model_dump(exclude_unset=True)},
+        payload={
+            "project_id": str(project.id),
+            "changes": project_in.model_dump(exclude_unset=True),
+        },
     )
     await session.commit()
-    
+
     return project  # type: ignore
 
 
@@ -107,12 +106,11 @@ async def delete_project(
     current_org: CurrentOrganization,
     current_actor: CurrentActor,
     project_id: UUID,
-    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin"])),
 ) -> None:
     """Soft delete a project. Requires Admin or Owner role."""
     await ProjectService.delete_project(session, current_org.id, project_id)
-    
+
     await AuditLogService.log_action(
         session=session,
         org_id=current_org.id,
@@ -121,10 +119,9 @@ async def delete_project(
         resource_type="project",
         resource_id=project_id,
     )
-    
+
     await WebhookDispatcher.dispatch_event(
         session=session,
-        background_tasks=background_tasks,
         org_id=current_org.id,
         event_type="project.deleted",
         payload={"project_id": str(project_id)},

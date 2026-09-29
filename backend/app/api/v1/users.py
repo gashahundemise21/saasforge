@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter
 
-from app.api.deps import CurrentOrganization, CurrentUser, RequireRole, SessionDep
-from app.schemas.user import MemberResponse, UserInvite, UserResponse, UserUpdate
+from app.api.deps import CurrentUser, SessionDep
+from app.schemas.user import UserResponse, UserUpdate
 from app.services.user import UserService
 
 router = APIRouter()
@@ -19,5 +19,3 @@ async def update_current_user(
 ) -> UserResponse:
     """Update current user."""
     return await UserService.update_user(session, current_user, user_in)  # type: ignore
-
-

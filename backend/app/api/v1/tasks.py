@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.deps import CurrentActor, CurrentOrganization, RequireRole, SessionDep
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
@@ -11,19 +11,20 @@ from app.services.webhook import WebhookDispatcher
 router = APIRouter()
 
 
-@router.post("/projects/{project_id}/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/projects/{project_id}/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_task(
     session: SessionDep,
     current_org: CurrentOrganization,
     current_actor: CurrentActor,
     project_id: UUID,
     task_in: TaskCreate,
-    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> TaskResponse:
     """Create a new task in a project."""
     task = await TaskService.create_task(session, current_org.id, project_id, task_in)
-    
+
     await AuditLogService.log_action(
         session=session,
         org_id=current_org.id,
@@ -31,18 +32,17 @@ async def create_task(
         action="task.created",
         resource_type="task",
         resource_id=task.id,
-        details={"title": task.title, "project_id": str(project_id)}
+        details={"title": task.title, "project_id": str(project_id)},
     )
-    
+
     await WebhookDispatcher.dispatch_event(
         session=session,
-        background_tasks=background_tasks,
         org_id=current_org.id,
         event_type="task.created",
         payload={"task_id": str(task.id), "title": task.title, "project_id": str(project_id)},
     )
     await session.commit()
-    
+
     return task  # type: ignore
 
 
@@ -75,12 +75,11 @@ async def update_task(
     current_actor: CurrentActor,
     task_id: UUID,
     task_in: TaskUpdate,
-    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> TaskResponse:
     """Update a task."""
     task = await TaskService.update_task(session, current_org.id, task_id, task_in)
-    
+
     await AuditLogService.log_action(
         session=session,
         org_id=current_org.id,
@@ -88,18 +87,17 @@ async def update_task(
         action="task.updated",
         resource_type="task",
         resource_id=task.id,
-        details=task_in.model_dump(exclude_unset=True)
+        details=task_in.model_dump(exclude_unset=True),
     )
-    
+
     await WebhookDispatcher.dispatch_event(
         session=session,
-        background_tasks=background_tasks,
         org_id=current_org.id,
         event_type="task.updated",
         payload={"task_id": str(task.id), "changes": task_in.model_dump(exclude_unset=True)},
     )
     await session.commit()
-    
+
     return task  # type: ignore
 
 
@@ -109,12 +107,11 @@ async def delete_task(
     current_org: CurrentOrganization,
     current_actor: CurrentActor,
     task_id: UUID,
-    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> None:
     """Delete a task."""
     await TaskService.delete_task(session, current_org.id, task_id)
-    
+
     await AuditLogService.log_action(
         session=session,
         org_id=current_org.id,
@@ -123,10 +120,9 @@ async def delete_task(
         resource_type="task",
         resource_id=task_id,
     )
-    
+
     await WebhookDispatcher.dispatch_event(
         session=session,
-        background_tasks=background_tasks,
         org_id=current_org.id,
         event_type="task.deleted",
         payload={"task_id": str(task_id)},

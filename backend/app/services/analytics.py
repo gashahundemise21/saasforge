@@ -2,7 +2,6 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.audit_log import AuditLog
 from app.models.project import Project
@@ -12,11 +11,14 @@ from app.schemas.analytics import DashboardStatsResponse
 
 class AnalyticsService:
     @staticmethod
-    async def get_dashboard_stats(session: AsyncSession, org_id: str | UUID) -> DashboardStatsResponse:
+    async def get_dashboard_stats(
+        session: AsyncSession, org_id: str | UUID
+    ) -> DashboardStatsResponse:
         # Total Projects
         projects_result = await session.execute(
-            select(func.count(Project.id))
-            .where(Project.organization_id == str(org_id), Project.deleted_at.is_(None))
+            select(func.count(Project.id)).where(
+                Project.organization_id == str(org_id), Project.deleted_at.is_(None)
+            )
         )
         total_projects = projects_result.scalar() or 0
 
@@ -33,7 +35,7 @@ class AnalyticsService:
             .where(Task.project_id.in_(select(org_projects_subq)))
             .group_by(Task.status)
         )
-        
+
         tasks_by_status: dict[str, int] = {}
         total_tasks = 0
         for row in status_result.all():
@@ -55,5 +57,5 @@ class AnalyticsService:
             total_projects=total_projects,
             total_tasks=total_tasks,
             tasks_by_status=tasks_by_status,
-            recent_activity=recent_activity, # type: ignore
+            recent_activity=recent_activity,  # type: ignore
         )

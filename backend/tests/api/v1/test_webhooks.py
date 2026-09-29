@@ -1,5 +1,5 @@
 import hmac
-import json
+
 import pytest
 import respx
 from httpx import AsyncClient, Response
@@ -16,7 +16,7 @@ async def test_create_and_list_webhooks(auth_client: AsyncClient):
     # Create webhook
     wh_resp = await auth_client.post(
         "/api/v1/webhooks",
-        json={"url": "https://example.com/webhook", "events": ["project.created"]}
+        json={"url": "https://example.com/webhook", "events": ["project.created"]},
     )
     assert wh_resp.status_code == 201
     wh_data = wh_resp.json()
@@ -38,8 +38,7 @@ async def test_webhook_delivery(auth_client: AsyncClient):
 
     # Create webhook
     wh_resp = await auth_client.post(
-        "/api/v1/webhooks",
-        json={"url": "https://example.com/webhook", "events": ["project.*"]}
+        "/api/v1/webhooks", json={"url": "https://example.com/webhook", "events": ["project.*"]}
     )
     wh_data = wh_resp.json()
     secret = wh_data["secret"]
@@ -50,15 +49,15 @@ async def test_webhook_delivery(auth_client: AsyncClient):
     # Trigger action: create a project (which triggers the webhook)
     proj_resp = await auth_client.post("/api/v1/projects", json={"name": "Webhook Project"})
     assert proj_resp.status_code == 201
-    
+
     # In tests without an event loop running forever, BackgroundTasks execute right after response.
     # We should have hit the mock.
     assert request.called
     assert request.call_count == 1
-    
+
     req = request.calls.last.request
     assert req.headers["X-SaaSForge-Event"] == "project.created"
-    
+
     # Verify HMAC signature
     signature = req.headers["X-SaaSForge-Signature"]
     expected_signature = WebhookDispatcher._generate_signature(secret, req.content)
@@ -66,6 +65,7 @@ async def test_webhook_delivery(auth_client: AsyncClient):
 
     # Wait a tiny bit for the DB insert of the delivery
     import asyncio
+
     await asyncio.sleep(0.1)
 
     # Check delivery log

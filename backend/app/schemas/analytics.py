@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict
+
 from app.schemas.audit_log import AuditLogResponse
+
 
 class DashboardStatsResponse(BaseModel):
     total_projects: int

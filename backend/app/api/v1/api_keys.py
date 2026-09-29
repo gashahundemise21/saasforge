@@ -21,7 +21,7 @@ async def create_api_key(
     Requires Admin or Owner role.
     """
     api_key, raw_key = await ApiKeyService.create_api_key(session, current_org.id, api_key_in)
-    
+
     # We create the response dict manually to include raw_key
     response_data = ApiKeyResponse.model_validate(api_key).model_dump()
     response_data["raw_key"] = raw_key

@@ -52,7 +52,9 @@ class TeamInvitation(BaseModel):
     role: Mapped[str] = mapped_column(String(50), default="member")
     token: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, accepted, rejected
+    status: Mapped[str] = mapped_column(
+        String(50), default="pending"
+    )  # pending, accepted, rejected
 
     # Relationships
     team: Mapped["Team"] = relationship("Team", back_populates="invitations")

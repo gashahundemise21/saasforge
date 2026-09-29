@@ -23,7 +23,7 @@ class CommentResponse(CommentBase):
     author_id: str
     created_at: datetime
     updated_at: datetime
-    
+
     author: UserResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)

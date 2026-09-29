@@ -1,4 +1,3 @@
-from typing import Any
 
 # Define hard limits for resources per plan
 # -1 indicates unlimited.
@@ -16,6 +15,7 @@ PLAN_QUOTAS: dict[str, dict[str, int]] = {
         "max_members": -1,
     },
 }
+
 
 def get_quota(plan_id: str, resource: str) -> int:
     """Retrieve the quota limit for a given plan and resource."""

@@ -17,7 +17,10 @@ class Attachment(BaseModel):
         UUID(as_uuid=False), ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True, index=True
     )
     project_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True, index=True
+        UUID(as_uuid=False),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
     organization_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), ForeignKey("organizations.id", ondelete="CASCADE"), index=True
