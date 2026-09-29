@@ -69,3 +69,16 @@ async def auth_client(async_client: AsyncClient, test_user: "User") -> AsyncClie
     token = create_access_token(test_user.id)
     async_client.headers.update({"Authorization": f"Bearer {token}"})
     return async_client
+
+import pytest
+from unittest.mock import AsyncMock
+
+@pytest.fixture(autouse=True)
+def mock_redis(monkeypatch: pytest.MonkeyPatch) -> None:
+    class MockRedis:
+        async def ping(self):
+            return True
+        async def close(self):
+            pass
+            
+    monkeypatch.setattr("redis.asyncio.from_url", lambda *args, **kwargs: MockRedis())

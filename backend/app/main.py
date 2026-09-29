@@ -12,15 +12,31 @@ from app.core.exceptions import (
 from app.core.logging import setup_logging
 
 
+import sentry_sdk
+from prometheus_fastapi_instrumentator import Instrumentator
+
 def create_app() -> FastAPI:
     # Set up structured logging
     setup_logging(json_logs=settings.ENVIRONMENT != "local")
+    
+    # Initialize Sentry
+    if settings.SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.ENVIRONMENT,
+            traces_sample_rate=1.0,
+        )
+
 
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
         openapi_url=f"{settings.API_V1_STR}/openapi.json",
     )
+
+    # Initialize Prometheus Instrumentator
+    Instrumentator().instrument(app).expose(app, include_in_schema=False, should_gzip=True)
+
 
     # CORS Configuration
     app.add_middleware(ApiLoggingMiddleware)

@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Observability
+    SENTRY_DSN: str | None = None
+
     # Stripe
     STRIPE_API_KEY: str = "sk_test_placeholder"
     STRIPE_WEBHOOK_SECRET: str = "whsec_placeholder"

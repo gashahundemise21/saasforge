@@ -19,6 +19,8 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "python-jose[cryptography]>=3.3.0",
     "stripe>=15.0.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "sentry-sdk[fastapi]>=2.5.1",
 ]
 
 [project.optional-dependencies]
