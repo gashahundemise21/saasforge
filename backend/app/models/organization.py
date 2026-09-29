@@ -26,3 +26,6 @@ class Organization(BaseModel):
     audit_logs: Mapped[list["AuditLog"]] = relationship(
         "AuditLog", back_populates="organization", cascade="all, delete-orphan"
     )
+    webhook_endpoints: Mapped[list["WebhookEndpoint"]] = relationship(
+        "WebhookEndpoint", back_populates="organization", cascade="all, delete-orphan"
+    )

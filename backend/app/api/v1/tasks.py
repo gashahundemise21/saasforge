@@ -1,11 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 
 from app.api.deps import CurrentActor, CurrentOrganization, RequireRole, SessionDep
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.services.audit_log import AuditLogService
 from app.services.task import TaskService
+from app.services.webhook import WebhookDispatcher
 
 router = APIRouter()
 
@@ -17,6 +18,7 @@ async def create_task(
     current_actor: CurrentActor,
     project_id: UUID,
     task_in: TaskCreate,
+    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> TaskResponse:
     """Create a new task in a project."""
@@ -30,6 +32,14 @@ async def create_task(
         resource_type="task",
         resource_id=task.id,
         details={"title": task.title, "project_id": str(project_id)}
+    )
+    
+    await WebhookDispatcher.dispatch_event(
+        session=session,
+        background_tasks=background_tasks,
+        org_id=current_org.id,
+        event_type="task.created",
+        payload={"task_id": str(task.id), "title": task.title, "project_id": str(project_id)},
     )
     await session.commit()
     
@@ -65,6 +75,7 @@ async def update_task(
     current_actor: CurrentActor,
     task_id: UUID,
     task_in: TaskUpdate,
+    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> TaskResponse:
     """Update a task."""
@@ -79,6 +90,14 @@ async def update_task(
         resource_id=task.id,
         details=task_in.model_dump(exclude_unset=True)
     )
+    
+    await WebhookDispatcher.dispatch_event(
+        session=session,
+        background_tasks=background_tasks,
+        org_id=current_org.id,
+        event_type="task.updated",
+        payload={"task_id": str(task.id), "changes": task_in.model_dump(exclude_unset=True)},
+    )
     await session.commit()
     
     return task  # type: ignore
@@ -90,6 +109,7 @@ async def delete_task(
     current_org: CurrentOrganization,
     current_actor: CurrentActor,
     task_id: UUID,
+    background_tasks: BackgroundTasks,
     _req: Depends = Depends(RequireRole(["Owner", "Admin", "Member"])),
 ) -> None:
     """Delete a task."""
@@ -102,5 +122,13 @@ async def delete_task(
         action="task.deleted",
         resource_type="task",
         resource_id=task_id,
+    )
+    
+    await WebhookDispatcher.dispatch_event(
+        session=session,
+        background_tasks=background_tasks,
+        org_id=current_org.id,
+        event_type="task.deleted",
+        payload={"task_id": str(task_id)},
     )
     await session.commit()
